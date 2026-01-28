@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/client/" />
+  <Folder Name="/client/src/">
+    <Project Path="HomeInventory.Client/HomeInventory.Client.csproj" Id="9c3a4399-4c6f-4892-8583-5d2acc726a87" />
+    <Project Path="HomeInventory.Desktop.Wpf/HomeInventory.Desktop.Wpf.csproj" Id="b4dc64da-bf25-4c0f-9d92-58bb5552b460" />
+    <Project Path="HomeInventory.Mobile.Maui/HomeInventory.Mobile.Maui.csproj" Id="6d6f2d73-8604-4279-85bb-f527a645b7ca" />
+  </Folder>
+  <Folder Name="/deploy/" />
+  <Folder Name="/docs/" />
+  <Folder Name="/server/" />
+  <Folder Name="/server/src/">
+    <Project Path="HomeInventory.Api/HomeInventory.Api.csproj" Id="2aa3a466-4d3b-4503-a2a9-1355c2627ef1" />
+    <Project Path="HomeInventory.Application/HomeInventory.Application.csproj" />
+    <Project Path="HomeInventory.Domain/HomeInventory.Domain.csproj" />
+    <Project Path="HomeInventory.Infrastructure/HomeInventory.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="HomeInventory.Contracts/HomeInventory.Contracts.csproj" Id="dc952633-d0d3-48f8-8541-d431846db646" />
+  </Folder>
+</Solution>
