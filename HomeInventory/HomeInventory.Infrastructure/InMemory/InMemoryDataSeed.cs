@@ -1,4 +1,5 @@
 ﻿using HomeInventory.Domain;
+using HomeInventory.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;

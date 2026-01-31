@@ -4,8 +4,32 @@ using System.Text;
 
 namespace HomeInventory.Domain
 {
-    public class Item(string name)
+    public class Item
     {
-        public string Name { get; private set; } = name;
+
+        public Item(string name)
+        {
+            Rename(name);
+        }
+
+        public void Rename(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("Name must be set");
+            }
+            _name = name.Trim();
+        }
+        public string Name => _name;
+        private string _name = null!;
+        public Guid CategoryId;
+        public int Quantity;
+        public Guid? LocationId { get; private set; }
+        public string? PlacementNote;
+
+        public void MoveToLocation(Guid? newLocationId)
+        {
+            LocationId = newLocationId;
+        }
     }
 }

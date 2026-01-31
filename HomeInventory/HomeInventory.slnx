@@ -17,4 +17,8 @@
   <Folder Name="/src/">
     <Project Path="HomeInventory.Contracts/HomeInventory.Contracts.csproj" Id="dc952633-d0d3-48f8-8541-d431846db646" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="HomeInventory.Domain.Tests/HomeInventory.Domain.Tests.csproj" Id="e05c359d-55bf-4e1e-af02-e477ae336329" />
+    <Project Path="HomeInventory.Infrastructure.Tests/HomeInventory.Infrastructure.Tests.csproj" Id="e89389bb-c136-42d6-95b9-162bf003abbc" />
+  </Folder>
 </Solution>

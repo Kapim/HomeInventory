@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace HomeInventory.Domain
+namespace HomeInventory.Application.Interfaces
 {
-    public enum UserRole
+    public interface IItemsRepository
     {
-        Parent,
-        Child
+
     }
 }

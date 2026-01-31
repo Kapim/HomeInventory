@@ -1,5 +1,5 @@
 ﻿using HomeInventory.Contracts;
-using HomeInventory.Domain;
+using HomeInventory.Domain.Enums;
 
 namespace HomeInventory.Api.Mapping
 {

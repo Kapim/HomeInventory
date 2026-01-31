@@ -1,14 +1,15 @@
-﻿using HomeInventory.Desktop.Wpf.ViewModels;
+﻿using HomeInventory.Client;
+using HomeInventory.Client.Auth;
+using HomeInventory.Client.Http;
+using HomeInventory.Desktop.Wpf.Services;
+using HomeInventory.Desktop.Wpf.Services.Navigation;
+using HomeInventory.Desktop.Wpf.ViewModels;
+using HomeInventory.Desktop.Wpf.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Configuration;
 using System.Data;
 using System.Windows;
-using HomeInventory.Desktop.Wpf.Views;
-using HomeInventory.Desktop.Wpf.Services;
-using HomeInventory.Desktop.Wpf.Services.Navigation;
-using HomeInventory.Client.Services;
-
 
 namespace HomeInventory.Desktop.Wpf
 {
@@ -33,11 +34,10 @@ namespace HomeInventory.Desktop.Wpf
 
                     services.AddSingleton<IDialogService, DialogService>();
                     services.AddSingleton<INavigationService, NavigationService>();
-                    //services.AddSingleton<IAuthService, HttpAuthService>();
-                    services.AddHttpClient<IAuthService, HttpAuthService>(client =>
-                    {
-                        client.BaseAddress = new Uri("http://localhost:5046/");
-                    });
+
+                    services.AddHomeInventoryClient(new Uri("http://localhost:5046/"));
+
+                    services.AddSingleton<ITokenStore, InMemoryTokenStore>();
                 })
                 .Build();
 

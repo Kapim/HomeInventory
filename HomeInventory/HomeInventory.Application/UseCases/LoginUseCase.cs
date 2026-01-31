@@ -5,9 +5,10 @@ using HomeInventory.Application.Models;
 namespace HomeInventory.Application.UseCases
 { 
 
-    public class LoginUseCase(IUserRepository users) : ILoginUseCase
+    public class LoginUseCase(IUserRepository users, ITokenService tokens) : ILoginUseCase
     {
         private readonly IUserRepository _users = users;
+        private readonly ITokenService _tokens = tokens;
 
         public async Task<LoginResult> LoginAsync(string username, string password)
         {
@@ -16,7 +17,7 @@ namespace HomeInventory.Application.UseCases
             {
                 throw new InvalidCredentialException();
             }
-            return new LoginResult(user.Id, user.UserRole);
+            return new LoginResult(_tokens.CreateAccessToken(user), user.UserRole);
         }
     }
 }
