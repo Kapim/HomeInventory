@@ -11,35 +11,35 @@ namespace HomeInventory.Application.Interfaces
     public interface ILocationRepository
     {
         
-        public void Add(Location location);
+        public Task AddAsync(Location location, CancellationToken ct = default);
         
         /**
          * Returns enumerable of locations with given name. If parentLocation is set, 
          * it returns empty or single item enumerable.
          */
-        public IEnumerable<Location> FindByName(string name, Guid? parentId = null);
+        public Task<IReadOnlyList<Location>> FindByNameAsync(string name, Guid? parentId = null, CancellationToken ct = default);
         /**
          * Returns enumerable of locations that are direct childs of the given location. If the filter
          * is set, it only returns locations of the given type.
          */
-        public IEnumerable<Location> GetChildren(Guid? parentid, IEnumerable<LocationType>? filter = null);
+        public Task<IReadOnlyList<Location>> GetChildrenAsync(Guid? parentid, IEnumerable<LocationType>? filter = null, CancellationToken ct = default);
 
-        public Location GetById(Guid id);
+        public Task<Location> GetByIdAsync(Guid id, CancellationToken ct = default);
 
-        public bool ExistsSiblingWithName(Guid? parentLocationId, string name, Guid? excludeLocationId = null);
+        public Task<bool> ExistsSiblingWithNameAsync(Guid? parentLocationId, string name, Guid? excludeLocationId = null, CancellationToken ct = default);
 
-        public IEnumerable<Location> GetAncestors(Guid locationId);
+        public Task<IReadOnlyList<Location>> GetAncestorsAsync(Guid locationId, CancellationToken ct = default);
 
-        public bool IsDescendantOf(Guid locationsId, Guid potentialAncestorId);
+        public Task<bool> IsDescendantOfAsync(Guid locationsId, Guid potentialAncestorId, CancellationToken ct = default);
 
-        public IEnumerable<Location> GetSubtree(Guid rootLocationId, bool includeRoot = true);
+        public Task<IReadOnlyList<Location>> GetSubtreeAsync(Guid rootLocationId, bool includeRoot = true, CancellationToken ct = default);
 
-        public IEnumerable<Location> Search(string query, Guid? withinParentId = null, int limit = 50);
+        public Task<IReadOnlyList<Location>> SearchAsync(string query, Guid? withinParentId = null, int limit = 50, CancellationToken ct = default);
 
-        public IEnumerable<Location> GetRoots();
+        public Task<IReadOnlyList<Location>> GetRootsAsync(CancellationToken ct = default);
 
-        public void Remove(Location location);
+        public Task RemoveAsync(Location location, CancellationToken ct = default);
 
-        public void Update(Location location);
+        public Task UpdateAsync(Location location, CancellationToken ct = default);
     }
 }

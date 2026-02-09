@@ -1,17 +1,29 @@
 ﻿using HomeInventory.Domain;
 using HomeInventory.Domain.Enums;
+using HomeInventory.Infrastructure.Persistence;
 using HomeInventory.Infrastructure.Repositories;
 using Xunit;
 
-namespace HomeInventory.Infrastructure.Tests.Repositories
+namespace HomeInventory.Infrastructure.Tests
 {
-    public class EfLocationRepositoryTests
+    [Collection(nameof(PostgresCollection))]
+    public class EfLocationRepositoryTests(PostgresFixture fx)
     {
+        private readonly PostgresFixture _fx = fx;
         private readonly Guid _ownerId = Guid.NewGuid();
         private readonly Guid _householdId = Guid.NewGuid();
 
-        private EfLocationRepository CreateRepo()
-            => new();
+        private (HomeInventoryDbContext ctx, EfLocationRepository repo) CreateSut()
+        {
+            var ctx = DbContextFactory.Create(_fx.ConnectionString);
+
+            // Clean DB between tests (simple approach)
+            ctx.Locations.RemoveRange(ctx.Locations);
+            ctx.SaveChanges();
+
+            var repo = new EfLocationRepository(ctx);
+            return (ctx, repo);
+        }
 
         private Location CreateLocation(string name, Guid? parentId = null, LocationType type = LocationType.Other)
         {
@@ -19,43 +31,43 @@ namespace HomeInventory.Infrastructure.Tests.Repositories
         }
 
         [Fact]
-        public void Add_Then_GetById_ReturnsEntity()
+        public async Task Add_Then_GetById_ReturnsEntity()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
             var loc = CreateLocation("Kitchen");
 
-            repo.Add(loc);
+            await repo.AddAsync(loc);
 
-            var loaded = repo.GetById(loc.Id);
+            var loaded = await repo.GetByIdAsync(loc.Id);
 
             Assert.Equal(loc.Id, loaded.Id);
             Assert.Equal("Kitchen", loaded.Name);
         }
 
         [Fact]
-        public void GetById_UnknownId_ThrowsKeyNotFoundException()
+        public async Task GetById_UnknownId_ThrowsKeyNotFoundException()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
-            Assert.Throws<KeyNotFoundException>(() => repo.GetById(Guid.NewGuid()));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetByIdAsync(Guid.NewGuid()));
         }
 
         [Fact]
-        public void FindByName_WithoutParent_ReturnsAllMatches()
+        public async Task FindByName_WithoutParent_ReturnsAllMatches()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var rootA = CreateLocation("RoomA");
             var rootB = CreateLocation("RoomB");
-            repo.Add(rootA);
-            repo.Add(rootB);
+            await repo.AddAsync(rootA);
+            await repo.AddAsync(rootB);
 
             var aBox = CreateLocation("Box", parentId: rootA.Id);
             var bBox = CreateLocation("Box", parentId: rootB.Id);
-            repo.Add(aBox);
-            repo.Add(bBox);
+            await repo.AddAsync(aBox);
+            await repo.AddAsync(bBox);
 
-            var results = repo.FindByName("Box").ToList();
+            var results = (await repo.FindByNameAsync("Box")).ToList();
 
             Assert.Equal(2, results.Count);
             Assert.Contains(results, x => x.Id == aBox.Id);
@@ -63,142 +75,142 @@ namespace HomeInventory.Infrastructure.Tests.Repositories
         }
 
         [Fact]
-        public void FindByName_WithParent_ReturnsOnlyMatchesUnderThatParent()
+        public async Task FindByName_WithParent_ReturnsOnlyMatchesUnderThatParent()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent1 = CreateLocation("Parent1");
             var parent2 = CreateLocation("Parent2");
-            repo.Add(parent1);
-            repo.Add(parent2);
+            await repo.AddAsync(parent1);
+            await repo.AddAsync(parent2);
 
             var box1 = CreateLocation("Box", parentId: parent1.Id);
             var box2 = CreateLocation("Box", parentId: parent2.Id);
-            repo.Add(box1);
-            repo.Add(box2);
+            await repo.AddAsync(box1);
+            await repo.AddAsync(box2);
 
-            var results = repo.FindByName("Box", parentId: parent1.Id).ToList();
+            var results = (await repo.FindByNameAsync("Box", parentId: parent1.Id)).ToList();
 
             Assert.Single(results);
             Assert.Equal(box1.Id, results[0].Id);
         }
 
         [Fact]
-        public void GetChildren_ReturnsOnlyDirectChildren()
+        public async Task GetChildren_ReturnsOnlyDirectChildren()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent = CreateLocation("Parent");
-            repo.Add(parent);
+            await repo.AddAsync(parent);
 
             var child = CreateLocation("Child", parentId: parent.Id);
-            repo.Add(child);
+            await repo.AddAsync(child);
 
             var grandChild = CreateLocation("GrandChild", parentId: child.Id);
-            repo.Add(grandChild);
+            await repo.AddAsync(grandChild);
 
-            var children = repo.GetChildren(parent.Id).ToList();
+            var children = (await repo.GetChildrenAsync(parent.Id)).ToList();
 
             Assert.Single(children);
             Assert.Equal(child.Id, children[0].Id);
         }
 
         [Fact]
-        public void GetChildren_Filter_ReturnsOnlyMatchingTypes()
+        public async Task GetChildren_Filter_ReturnsOnlyMatchingTypes()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent = CreateLocation("Parent");
-            repo.Add(parent);
+            await repo.AddAsync(parent);
 
             var drawer = CreateLocation("Drawer1", parentId: parent.Id, type: LocationType.Drawer);
             var shelf = CreateLocation("Shelf1", parentId: parent.Id, type: LocationType.Shelf);
-            repo.Add(drawer);
-            repo.Add(shelf);
+            await repo.AddAsync(drawer);
+            await repo.AddAsync(shelf);
 
-            var filtered = repo.GetChildren(parent.Id, filter: new[] { LocationType.Drawer }).ToList();
+            var filtered = (await repo.GetChildrenAsync(parent.Id, filter: new[] { LocationType.Drawer })).ToList();
 
             Assert.Single(filtered);
             Assert.Equal(drawer.Id, filtered[0].Id);
         }
 
         [Fact]
-        public void GetRoots_ReturnsOnlyNullParentLocations()
+        public async Task GetRoots_ReturnsOnlyNullParentLocations()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var root1 = CreateLocation("Root1");
             var root2 = CreateLocation("Root2");
-            repo.Add(root1);
-            repo.Add(root2);
+            await repo.AddAsync(root1);
+            await repo.AddAsync(root2);
 
             var child = CreateLocation("Child", parentId: root1.Id);
-            repo.Add(child);
+            await repo.AddAsync(child);
 
-            var roots = repo.GetRoots().ToList();
+            var roots = (await repo.GetRootsAsync()).ToList();
 
             Assert.Equal(2, roots.Count);
             Assert.All(roots, r => Assert.Null(r.ParentLocationId));
         }
 
         [Fact]
-        public void ExistsSiblingWithName_ReturnsTrue_WhenNameExistsUnderSameParent()
+        public async Task ExistsSiblingWithName_ReturnsTrue_WhenNameExistsUnderSameParent()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent = CreateLocation("Parent");
-            repo.Add(parent);
+            await repo.AddAsync(parent);
 
-            repo.Add(CreateLocation("Box", parentId: parent.Id));
+            await repo.AddAsync(CreateLocation("Box", parentId: parent.Id));
 
-            Assert.True(repo.ExistsSiblingWithName(parent.Id, "Box"));
+            Assert.True(await repo.ExistsSiblingWithNameAsync(parent.Id, "Box"));
         }
 
         [Fact]
-        public void ExistsSiblingWithName_ReturnsFalse_WhenNameExistsButUnderDifferentParent()
+        public async Task ExistsSiblingWithName_ReturnsFalse_WhenNameExistsButUnderDifferentParent()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent1 = CreateLocation("Parent1");
             var parent2 = CreateLocation("Parent2");
-            repo.Add(parent1);
-            repo.Add(parent2);
+            await repo.AddAsync(parent1);
+            await repo.AddAsync(parent2);
 
-            repo.Add(CreateLocation("Box", parentId: parent1.Id));
+            await repo.AddAsync(CreateLocation("Box", parentId: parent1.Id));
 
-            Assert.False(repo.ExistsSiblingWithName(parent2.Id, "Box"));
+            Assert.False(await repo.ExistsSiblingWithNameAsync(parent2.Id, "Box"));
         }
 
         [Fact]
-        public void ExistsSiblingWithName_ExcludeId_IgnoresThatLocation()
+        public async Task ExistsSiblingWithName_ExcludeId_IgnoresThatLocation()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var parent = CreateLocation("Parent");
-            repo.Add(parent);
+            await repo.AddAsync(parent);
 
             var loc = CreateLocation("Box", parentId: parent.Id);
-            repo.Add(loc);
+            await repo.AddAsync(loc);
 
             // When renaming the same location to its current name, excludeId should prevent false positive.
-            Assert.False(repo.ExistsSiblingWithName(parent.Id, "Box", excludeLocationId: loc.Id));
+            Assert.False(await repo.ExistsSiblingWithNameAsync(parent.Id, "Box", excludeLocationId: loc.Id));
         }
 
         [Fact]
-        public void GetAncestors_ReturnsParentThenRoot()
+        public async Task GetAncestors_ReturnsParentThenRoot()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var root = CreateLocation("Root");
-            repo.Add(root);
+            await repo.AddAsync(root);
 
             var child = CreateLocation("Child", parentId: root.Id);
-            repo.Add(child);
+            await repo.AddAsync(child);
 
             var leaf = CreateLocation("Leaf", parentId: child.Id);
-            repo.Add(leaf);
+            await repo.AddAsync(leaf);
 
-            var ancestors = repo.GetAncestors(leaf.Id).ToList();
+            var ancestors = (await repo.GetAncestorsAsync(leaf.Id)).ToList();
 
             Assert.Equal(2, ancestors.Count);
             Assert.Equal(child.Id, ancestors[0].Id);
@@ -206,40 +218,40 @@ namespace HomeInventory.Infrastructure.Tests.Repositories
         }
 
         [Fact]
-        public void IsDescendantOf_ReturnsTrue_ForDescendant()
+        public async Task IsDescendantOf_ReturnsTrue_ForDescendant()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var root = CreateLocation("Root");
-            repo.Add(root);
+            await repo.AddAsync(root);
 
             var child = CreateLocation("Child", parentId: root.Id);
-            repo.Add(child);
+            await repo.AddAsync(child);
 
             var leaf = CreateLocation("Leaf", parentId: child.Id);
-            repo.Add(leaf);
+            await repo.AddAsync(leaf);
 
-            Assert.True(repo.IsDescendantOf(leaf.Id, root.Id));
-            Assert.True(repo.IsDescendantOf(leaf.Id, child.Id));
-            Assert.False(repo.IsDescendantOf(root.Id, leaf.Id));
+            Assert.True(await repo.IsDescendantOfAsync(leaf.Id, root.Id));
+            Assert.True(await repo.IsDescendantOfAsync(leaf.Id, child.Id));
+            Assert.False(await repo.IsDescendantOfAsync(root.Id, leaf.Id));
         }
 
         [Fact]
-        public void GetSubtree_IncludeRootTrue_ReturnsRootAndAllDescendants()
+        public async Task GetSubtree_IncludeRootTrue_ReturnsRootAndAllDescendants()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var root = CreateLocation("Root");
-            repo.Add(root);
+            await repo.AddAsync(root);
 
             var child1 = CreateLocation("Child1", parentId: root.Id);
             var child2 = CreateLocation("Child2", parentId: root.Id);
             var leaf = CreateLocation("Leaf", parentId: child1.Id);
-            repo.Add(child1);
-            repo.Add(child2);
-            repo.Add(leaf);
+            await repo.AddAsync(child1);
+            await repo.AddAsync(child2);
+            await repo.AddAsync(leaf);
 
-            var nodes = repo.GetSubtree(root.Id, includeRoot: true).ToList();
+            var nodes = (await repo.GetSubtreeAsync(root.Id, includeRoot: true)).ToList();
 
             Assert.Contains(nodes, x => x.Id == root.Id);
             Assert.Contains(nodes, x => x.Id == child1.Id);
@@ -248,106 +260,105 @@ namespace HomeInventory.Infrastructure.Tests.Repositories
         }
 
         [Fact]
-        public void GetSubtree_IncludeRootFalse_DoesNotReturnRoot()
+        public async Task GetSubtree_IncludeRootFalse_DoesNotReturnRoot()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var root = CreateLocation("Root");
-            repo.Add(root);
+            await repo.AddAsync(root);
 
             var child = CreateLocation("Child", parentId: root.Id);
-            repo.Add(child);
+            await repo.AddAsync(child);
 
-            var nodes = repo.GetSubtree(root.Id, includeRoot: false).ToList();
+            var nodes = (await repo.GetSubtreeAsync(root.Id, includeRoot: false)).ToList();
 
             Assert.DoesNotContain(nodes, x => x.Id == root.Id);
             Assert.Contains(nodes, x => x.Id == child.Id);
         }
 
         [Fact]
-        public void Search_IsCaseInsensitiveContains_AndRespectsLimit()
+        public async Task Search_IsCaseInsensitiveContains_AndRespectsLimit()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
-            repo.Add(CreateLocation("Kitchen"));
-            repo.Add(CreateLocation("kitchen drawer"));
-            repo.Add(CreateLocation("Garage"));
+            await repo.AddAsync(CreateLocation("Kitchen"));
+            await repo.AddAsync(CreateLocation("kitchen drawer"));
+            await repo.AddAsync(CreateLocation("Garage"));
 
-            var results = repo.Search("KITC", limit: 1).ToList();
+            var results = (await repo.SearchAsync("KITC", limit: 1)).ToList();
 
             Assert.Single(results);
             Assert.True(results[0].Name.Contains("KITC", StringComparison.OrdinalIgnoreCase));
         }
 
         [Fact]
-        public void Search_WithinParentId_FindsOnlyInThatScope()
+        public async Task Search_WithinParentId_FindsOnlyInThatScope()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var kitchen = CreateLocation("Kitchen");
             var garage = CreateLocation("Garage");
-            repo.Add(kitchen);
-            repo.Add(garage);
+            await repo.AddAsync(kitchen);
+            await repo.AddAsync(garage);
 
             var kBox = CreateLocation("Box", parentId: kitchen.Id);
             var gBox = CreateLocation("Box", parentId: garage.Id);
-            repo.Add(kBox);
-            repo.Add(gBox);
+            await repo.AddAsync(kBox);
+            await repo.AddAsync(gBox);
 
-            var results = repo.Search("Box", withinParentId: kitchen.Id).ToList();
+            var results = (await repo.SearchAsync("Box", withinParentId: kitchen.Id)).ToList();
 
             Assert.Contains(results, x => x.Id == kBox.Id);
             Assert.DoesNotContain(results, x => x.Id == gBox.Id);
         }
 
         [Fact]
-        public void Update_PersistsChanges()
+        public async Task Update_PersistsChanges()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var loc = CreateLocation("Old");
-            repo.Add(loc);
+            await repo.AddAsync(loc);
 
             loc.Rename("New");
-            repo.Update(loc);
+            await repo.UpdateAsync(loc);
 
-            var loaded = repo.GetById(loc.Id);
+            var loaded = await repo.GetByIdAsync(loc.Id);
             Assert.Equal("New", loaded.Name);
         }
 
         [Fact]
-        public void Remove_Then_GetById_Throws()
+        public async Task Remove_Then_GetById_Throws()
         {
-            var repo = CreateRepo();
+            var (_, repo) = CreateSut();
 
             var loc = CreateLocation("ToRemove");
-            repo.Add(loc);
+            await repo.AddAsync(loc);
 
-            repo.Remove(loc);
+            await repo.RemoveAsync(loc);
 
-            Assert.Throws<KeyNotFoundException>(() => repo.GetById(loc.Id));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetByIdAsync(loc.Id));
         }
 
         [Fact]
-        public void Remove_RemovesSubtree_IfRootRemoved()
+        public async Task Remove_RemovesSubtree_IfRootRemoved()
         {
-            // This is a design choice. For tree repos it's often expected.
-            // If you DON'T want cascade delete, delete this test.
-            var repo = CreateRepo();
+            
+            var (_, repo) = CreateSut();
 
             var root = CreateLocation("Root");
-            repo.Add(root);
+            await repo.AddAsync(root);
 
             var child = CreateLocation("Child", parentId: root.Id);
             var leaf = CreateLocation("Leaf", parentId: child.Id);
-            repo.Add(child);
-            repo.Add(leaf);
+            await repo.AddAsync(child);
+            await repo.AddAsync(leaf);
 
-            repo.Remove(root);
+            await repo.RemoveAsync(root);
 
-            Assert.Throws<KeyNotFoundException>(() => repo.GetById(root.Id));
-            Assert.Throws<KeyNotFoundException>(() => repo.GetById(child.Id));
-            Assert.Throws<KeyNotFoundException>(() => repo.GetById(leaf.Id));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetByIdAsync(root.Id));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetByIdAsync(child.Id));
+            await Assert.ThrowsAsync<KeyNotFoundException>(async () => await repo.GetByIdAsync(leaf.Id));
         }
     }
 }

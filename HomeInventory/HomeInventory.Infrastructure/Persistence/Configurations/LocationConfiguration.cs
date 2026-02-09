@@ -15,9 +15,10 @@ namespace HomeInventory.Infrastructure.Persistence.Configurations
             builder.Property(x => x.Id).HasColumnName("id");
 
 
-            builder.Property<string>("_name")
+            builder.Property(x => x.Name)
                    .HasColumnName("name")
-                   .IsRequired();
+                   .IsRequired()
+                   .HasField("_name");
 
             builder.Property(x => x.ParentLocationId)
                    .HasColumnName("parent_id");
