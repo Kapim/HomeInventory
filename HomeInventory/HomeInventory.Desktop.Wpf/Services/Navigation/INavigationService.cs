@@ -9,6 +9,6 @@ namespace HomeInventory.Desktop.Wpf.Services.Navigation
         object? CurrentViewModel { get; }
         event Action? CurrentViewModelChanged;
 
-        void NavigateTo<TViewModel>() where TViewModel : class;
+        Task NavigateTo<TViewModel>() where TViewModel : class;
     }
 }

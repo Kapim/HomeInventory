@@ -20,7 +20,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public async Task Logout()
         {
             await Auth.LogoutAsync();
-            Nav.NavigateTo<LoginViewModel>();
+            await Nav.NavigateTo<LoginViewModel>();
         }
 
     }

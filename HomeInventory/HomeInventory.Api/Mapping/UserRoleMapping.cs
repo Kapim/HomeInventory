@@ -9,7 +9,14 @@ namespace HomeInventory.Api.Mapping
         {
             UserRole.Parent => UserRoleDto.Parent,
             UserRole.Child => UserRoleDto.Child,
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(role))
+        };
+
+        public static UserRole Map(UserRoleDto role) => role switch
+        {
+            UserRoleDto.Parent => UserRole.Parent,
+            UserRoleDto.Child => UserRole.Child,
+            _ => throw new ArgumentOutOfRangeException(nameof(role))
         };
     }
 }

@@ -16,10 +16,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-        private string userName = "";
+        private string userName = "Kapi";
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
-        private string password = "";
+        private string password = "heslo";
 
         [RelayCommand(CanExecute = nameof(CanLogin))]
         public async Task Login()
@@ -28,17 +28,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var result = await _auth.LoginAsync(UserName, Password);
                 Debug.WriteLine(result);
-                _nav.NavigateTo<ItemsSearchViewModel>();
             } catch (InvalidCredentialsException)
             {
                 _dialogs.ShowInfo("Přihlášení selhalo", "Špatné jméno nebo heslo.");
+                return;
             } catch (ApiUnavailableException)
             {
                 _dialogs.ShowInfo("Přihlášení selhalo", "Server není dostupný. Zkus to prosím později.");
+                return;
             } catch (Exception ex)
             {
                 _dialogs.ShowInfo("Přihlášení selhalo", "Neočekáváná chyba: " + ex.Message);
+                return;
             }
+
+            await _nav.NavigateTo<MainViewModel>();
         }
 
         private bool CanLogin()

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using HomeInventory.Contracts;
 
-namespace HomeInventory.Client.Services
+namespace HomeInventory.Client.Services.Interfaces
 {
     public interface IItemsService
     {

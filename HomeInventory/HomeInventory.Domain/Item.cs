@@ -7,9 +7,12 @@ namespace HomeInventory.Domain
     public class Item
     {
 
-        public Item(string name)
+        public Item(string name, Guid ownerUserId, Guid locationId)
         {
             Rename(name);
+            OwnerUserId = ownerUserId;
+            LocationId = locationId;
+            NormalizedName = Name.ToLowerInvariant();
         }
 
         public void Rename(string name)
@@ -20,14 +23,17 @@ namespace HomeInventory.Domain
             }
             _name = name.Trim();
         }
+        public Guid Id { get; private set; } = Guid.NewGuid();
         public string Name => _name;
         private string _name = null!;
-        public Guid CategoryId;
         public int Quantity;
-        public Guid? LocationId { get; private set; }
+        public Guid LocationId { get; private set; }
+        public Guid OwnerUserId { get; private set; }
         public string? PlacementNote;
+        public string? Description;
+        public string NormalizedName { get; private set; }
 
-        public void MoveToLocation(Guid? newLocationId)
+        public void MoveToLocation(Guid newLocationId)
         {
             LocationId = newLocationId;
         }

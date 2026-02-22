@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeInventory.Infrastructure.Migrations
 {
     [DbContext(typeof(HomeInventoryDbContext))]
-    [Migration("20260130223132_InitLocations")]
-    partial class InitLocations
+    [Migration("20260210234152_Update2")]
+    partial class Update2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,72 @@ namespace HomeInventory.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("HomeInventory.Domain.Household", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("households", (string)null);
+                });
+
+            modelBuilder.Entity("HomeInventory.Domain.Item", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<Guid>("LocationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("location_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OwnerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_user_id");
+
+                    b.Property<string>("PlacementNote")
+                        .HasColumnType("text")
+                        .HasColumnName("placement_note");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer")
+                        .HasColumnName("quantity");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("OwnerUserId");
+
+                    b.ToTable("items", (string)null);
+                });
 
             modelBuilder.Entity("HomeInventory.Domain.Location", b =>
                 {
@@ -44,6 +110,11 @@ namespace HomeInventory.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("location_type");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
                     b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasColumnType("text");
@@ -60,11 +131,6 @@ namespace HomeInventory.Infrastructure.Migrations
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
                         .HasColumnName("sort_order");
-
-                    b.Property<string>("_name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
 
                     b.HasKey("Id");
 

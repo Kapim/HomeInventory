@@ -30,7 +30,10 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<ShellWindow>();
                     services.AddSingleton<ShellWindowViewModel>();
                     services.AddTransient<LoginViewModel>();
+                    services.AddTransient<MainViewModel>();
+                    services.AddTransient<TopBarViewModel>();
                     services.AddTransient<ItemsSearchViewModel>();
+                    
 
                     services.AddSingleton<IDialogService, DialogService>();
                     services.AddSingleton<INavigationService, NavigationService>();

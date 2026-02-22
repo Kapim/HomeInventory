@@ -7,7 +7,7 @@ using System.Text;
 
 namespace HomeInventory.Client.Http
 {
-    public class HttpAuthService(HttpClient http) : IAuthApiClient
+    public class HttpAuthClient(HttpClient http) : IAuthApiClient
     {
         private readonly HttpClient _http = http;
        
@@ -16,7 +16,7 @@ namespace HomeInventory.Client.Http
             try
             {
                 
-                using var resp = await _http.PostAsJsonAsync("api/auth", request, ct);
+                using var resp = await _http.PostAsJsonAsync("api/auth/login", request, ct);
 
                 if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
                     throw new InvalidCredentialsException();

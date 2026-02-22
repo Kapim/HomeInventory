@@ -12,5 +12,13 @@
         <DataTemplate DataType="{x:Type vm:ItemsSearchViewModel}">
             <views:ItemsSearchView />
         </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:TopBarViewModel}">
+            <views:TopBarView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:MainViewModel}">
+            <views:MainView />
+        </DataTemplate>
     </Application.Resources>
 </Application>

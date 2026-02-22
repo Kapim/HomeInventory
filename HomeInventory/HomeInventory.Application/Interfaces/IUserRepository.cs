@@ -8,6 +8,8 @@ namespace HomeInventory.Application.Interfaces
     public interface IUserRepository
     {
         Task<User?> FindByUsernameAsync(string username, CancellationToken ct);
-        public Task<bool> AddUser(User user);
+        public Task AddAsync(User user, CancellationToken ct);
+        public Task UpdateAsync(User user, CancellationToken ct);
+        public Task<User?> GetByIdAsync(Guid id, CancellationToken ct);
     }
 }

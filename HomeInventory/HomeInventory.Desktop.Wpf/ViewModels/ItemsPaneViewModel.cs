@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace HomeInventory.Application.Interfaces
+namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public interface IItemsRepository
+    internal class ItemsPaneViewModel
     {
-
     }
 }

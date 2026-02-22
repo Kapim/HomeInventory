@@ -6,11 +6,13 @@ namespace HomeInventory.Domain.Tests
 {
     public class ItemTests
     {
+        readonly Guid _ownerId = Guid.NewGuid();
+        readonly Guid _locationId = Guid.NewGuid();
         [Fact]
         public void Ctor_Should_SetName()
         {
             var name = "Flashlight";
-            var item = new Item(name);
+            var item = new Item(name, _ownerId, _locationId);
             Assert.Equal(name, item.Name);
         }
 
@@ -19,7 +21,7 @@ namespace HomeInventory.Domain.Tests
         [InlineData("\tFlashlight\n", "Flashlight")]
         public void Ctor_Should_TrimName(string input, string expected)
         {
-            var item = new Item(input);
+            var item = new Item(input, _ownerId, _locationId);
 
             Assert.Equal(expected, item.Name);
         }
@@ -31,13 +33,13 @@ namespace HomeInventory.Domain.Tests
         [InlineData("\t\r\n")]
         public void Ctor_Should_Throw_WhenNameIsNullOrWhitespace(string? input)
         {
-            Assert.Throws<ArgumentException>(() => new Item(input!));
+            Assert.Throws<ArgumentException>(() => new Item(input!, _ownerId, _locationId));
         }
 
         [Fact]
         public void Rename_Should_UpdateName()
         {
-            var item = new Item("Old");
+            var item = new Item("Old", _ownerId, _locationId);
 
             item.Rename("New");
 
@@ -48,7 +50,7 @@ namespace HomeInventory.Domain.Tests
         [InlineData("  New  ", "New")]
         public void Rename_Should_TrimName(string input, string expected)
         {
-            var item = new Item("Old");
+            var item = new Item("Old", _ownerId, _locationId);
 
             item.Rename(input);
 
@@ -61,24 +63,16 @@ namespace HomeInventory.Domain.Tests
         [InlineData("   ")]
         public void Rename_Should_Throw_WhenNameIsNullOrWhitespace(string? input)
         {
-            var item = new Item("Ok");
+            var item = new Item("Ok", _ownerId, _locationId);
 
             Assert.Throws<ArgumentException>(() => item.Rename(input!));
         }
 
-        [Fact]
-        public void LocationId_Should_BeNull_ByDefault()
-        {
-            var item = new Item("Ok");
-
-            Assert.Null(item.LocationId);
-        }
-
-       
+              
         [Fact]
         public void MoveToLocation_Should_SetLocationId()
         {
-            var item = new Item("Ok");
+            var item = new Item("Ok", _ownerId, _locationId);
             var locationId = Guid.NewGuid();
         
             item.MoveToLocation(locationId);
@@ -86,16 +80,6 @@ namespace HomeInventory.Domain.Tests
             Assert.Equal(locationId, item.LocationId);
         }
         
-        [Fact]
-        public void MoveToLocation_Should_Allow_Null_ForUnassigned()
-        {
-            var item = new Item("Ok");
-            var locationId = Guid.NewGuid();
-            item.MoveToLocation(locationId);
-        
-            item.MoveToLocation(null);
-        
-            Assert.Null(item.LocationId);
-        }
+       
     }
 }

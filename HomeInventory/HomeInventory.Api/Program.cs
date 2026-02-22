@@ -1,8 +1,10 @@
+using HomeInventory.Application.Interfaces;
 using HomeInventory.Application.UseCases;
 using HomeInventory.Infrastructure;
 using HomeInventory.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,9 +13,31 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Zadej JWT token"
+    });
+
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
+});
 
 builder.Services.AddScoped<ILoginUseCase, LoginUseCase>();
+builder.Services.AddScoped<ILocationUseCase, LocationUseCase>();
+builder.Services.AddScoped<IHouseholdUseCase, HouseholdUseCase>();
+builder.Services.AddScoped<IItemUseCase, ItemUseCase>();
+builder.Services.AddScoped<IRegisterUseCase, RegisterUseCase>();
+builder.Services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
+
 
 JwtSettings? jwtSettings = builder.Configuration
     .GetSection("Jwt")
