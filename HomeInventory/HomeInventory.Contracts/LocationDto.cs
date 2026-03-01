@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace HomeInventory.Contracts
+﻿namespace HomeInventory.Contracts
 {
     public sealed record LocationDto(
         Guid Id,
         string Name,
-        LocationTypeDto Type,
+        LocationTypeDto LocationType,
         Guid? ParentLocationId,
         Guid HouseholdId,
         Guid OwnerUserId,

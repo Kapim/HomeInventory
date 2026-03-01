@@ -1,4 +1,5 @@
 ﻿using HomeInventory.Contracts;
+using HomeInventory.Contracts.Requests;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

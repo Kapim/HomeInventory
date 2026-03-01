@@ -1,4 +1,6 @@
-﻿using HomeInventory.Contracts;
+﻿using HomeInventory.Application.Models;
+using HomeInventory.Contracts;
+using HomeInventory.Contracts.Requests;
 using HomeInventory.Domain;
 
 namespace HomeInventory.Api.Mapping
@@ -13,5 +15,36 @@ namespace HomeInventory.Api.Mapping
                 item.OwnerUserId, 
                 item.PlacementNote, 
                 item.Description);
+
+        public static ItemCreateRequest Map(CreateItemRequestDto request) =>
+            new(request.Name,
+                request.Quantity,
+                request.LocationId,
+                request.OwnerId,
+                request.PlacementNote,
+                request.Description);
+
+        public static CreateItemRequestDto Map(ItemCreateRequest request) =>
+            new(request.Name,
+                request.Quantity,
+                request.LocationId,
+                request.OwnerId,
+                request.PlacementNote,
+                request.Description);
+
+        public static ItemUpdateRequest Map(UpdateItemRequestDto request) =>
+            new(request.Name,
+                request.Description,
+                request.Quantinty,
+                request.PlacementNote,
+                request.LocationId);
+
+        public static UpdateItemRequestDto Map(ItemUpdateRequest request) =>
+            new(request.Name,
+                request.Description,
+                request.Quantinty,
+                request.PlacementNote,
+                request.LocationId);
     }
+
 }

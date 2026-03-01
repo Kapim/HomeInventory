@@ -16,12 +16,10 @@ namespace HomeInventory.Application.Interfaces
             CancellationToken ct = default);
 
         Task<IReadOnlyList<Item>> FindByNameAsync(
-            Guid ownerUserId,
             string name,
             CancellationToken ct = default);
 
         Task<IReadOnlyList<Item>> GetByLocationAsync(
-            Guid ownerUserId,
             Guid locationId,
             CancellationToken ct = default);
 
@@ -33,7 +31,7 @@ namespace HomeInventory.Application.Interfaces
             Item item,
             CancellationToken ct = default);
 
-        Task UpdateAsync(
+        Task<Item> UpdateAsync(
             Item item,
             CancellationToken ct = default);
 

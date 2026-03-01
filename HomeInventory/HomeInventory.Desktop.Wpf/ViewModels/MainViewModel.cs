@@ -3,30 +3,70 @@ using HomeInventory.Client.Models;
 using HomeInventory.Client.Services;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
+using HomeInventory.Desktop.Wpf.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class MainViewModel(TopBarViewModel topBar, IHouseholdsService householdsService) : ObservableObject, IAsyncInitializable 
+    public partial class MainViewModel : ObservableObject, IAsyncInitializable 
     {
-        public TopBarViewModel TopBar { get; } = topBar;
+        public TopBarViewModel TopBar { get; } 
+        public LocationTreeViewModel LocationTree { get; }
+        public RightPaneViewModel RightPane { get; }
 
-        private readonly IHouseholdsService _householdService = householdsService;
+        private readonly IHouseholdsService _householdsService;
+        private readonly ILocationsService _locationsService;
         public ObservableCollection<Household> Households = [];
-        public Household? SelectedHousehold;
 
+        public MainViewModel(TopBarViewModel topBar,
+            LocationTreeViewModel locationTree,
+            RightPaneViewModel rightPaneViewModel,
+            IHouseholdsService householdsService,
+            ILocationsService locationsService)
+        {
+            TopBar = topBar;
+            LocationTree = locationTree;
+            RightPane = rightPaneViewModel;
+            _householdsService = householdsService;
+            _locationsService = locationsService;
+
+            TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
+            TopBar.AddItemEvent += TopBar_AddItemEvent;
+            LocationTree.OnSelectedLocationChangedEvent += SetActiveLocationAsync;
+
+        }
+
+        private void TopBar_AddItemEvent(object? sender, EventArgs e)
+        {
+            RightPane.AddNewItem();
+        }
+
+        private async void SetActiveLocationAsync(object? sender, LocationNodeViewModel? location)
+        {
+            if (location != null)
+                await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
+        }
 
         public async Task InitializeAsync(CancellationToken ct = default)
         {
-            var h = await _householdService.GetAllAsync(new CancellationTokenSource().Token);
+            var h = await _householdsService.GetAllAsync(new CancellationTokenSource().Token);
             Households = new ObservableCollection<Household>(h);
-            SelectedHousehold = Households.FirstOrDefault();
             TopBar.Households = Households;
-            TopBar.SelectedHousehold = SelectedHousehold;
-        } 
+            TopBar.SelectedHousehold = Households.FirstOrDefault();
+        }
+
+        private async void SetActiveHouseholdAsync(object? sender, Household? h)
+        {
+            if (h != null)
+            {
+                await LocationTree.LoadAsync(h.Id, new CancellationTokenSource().Token);
+            }
+        }
     }
 }

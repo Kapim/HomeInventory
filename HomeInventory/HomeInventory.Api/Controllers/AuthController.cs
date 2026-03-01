@@ -5,6 +5,7 @@ using HomeInventory.Contracts;
 using System.Security.Authentication;
 using HomeInventory.Api.Mapping;
 using HomeInventory.Application.Exceptions;
+using HomeInventory.Contracts.Requests;
 
 namespace HomeInventory.Api.Controllers
 {

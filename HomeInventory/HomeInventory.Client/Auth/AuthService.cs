@@ -1,4 +1,5 @@
 ﻿using HomeInventory.Contracts;
+using HomeInventory.Contracts.Requests;
 
 namespace HomeInventory.Client.Auth
 {

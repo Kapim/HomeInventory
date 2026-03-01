@@ -1,8 +1,8 @@
 ﻿using HomeInventory.Application.Interfaces;
 using HomeInventory.Domain;
-using HomeInventory.Domain.Enums;
 using HomeInventory.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace HomeInventory.Infrastructure.Repositories
 {
@@ -25,6 +25,11 @@ namespace HomeInventory.Infrastructure.Repositories
         public async Task<IReadOnlyList<Household>> GetHouseholdsAsync(CancellationToken ct = default)
         {
             return await _db.Households.ToListAsync(ct);
+        }
+
+        public async Task<IReadOnlyList<Location>> GetLocationsAsync(Guid householdId, CancellationToken ct)
+        {
+            return await _db.Locations.Where(x => x.HouseholdId == householdId).ToListAsync(ct);
         }
 
         public async Task RemoveAsync(Household household, CancellationToken ct = default)

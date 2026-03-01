@@ -164,7 +164,7 @@ namespace HomeInventory.Infrastructure.Tests
 
             ctx.ChangeTracker.Clear();
 
-            var results = await repo.GetByLocationAsync(_ownerId, location.Id, CancellationToken.None);
+            var results = await repo.GetByLocationAsync(location.Id, CancellationToken.None);
 
             Assert.Equal(2, results.Count);
             Assert.All(results, i =>

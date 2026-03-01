@@ -1,6 +1,8 @@
 ﻿using HomeInventory.Api.Mapping;
+using HomeInventory.Application.Models;
 using HomeInventory.Application.UseCases;
 using HomeInventory.Contracts;
+using HomeInventory.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Security.Authentication;
@@ -8,7 +10,7 @@ using System.Security.Authentication;
 namespace HomeInventory.Api.Controllers
 {
     [ApiController]
-    [Route("api/item")]
+    [Route("api/items")]
     public class ItemController(IItemUseCase items) : ControllerBase
     {
         private readonly IItemUseCase _items = items;
@@ -16,7 +18,7 @@ namespace HomeInventory.Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<ItemDto>> GetItem(Guid id)
         {
-            var item = await _items.GetItem(id);
+            var item = await _items.GetItemAsync(id, new CancellationTokenSource().Token);
             if (item == null)
             {
                 return NotFound();
@@ -26,9 +28,15 @@ namespace HomeInventory.Api.Controllers
         }
 
         [HttpPost]
-        public async Task AddItem(string name, Guid ownerId, Guid locationId)
+        public async Task<ItemDto> AddItem(CreateItemRequestDto createItemRequestDto)
         {
-            await _items.AddItem(name, ownerId, locationId);
+            return ItemMapping.Map(await _items.AddItemAsync(ItemMapping.Map(createItemRequestDto), new CancellationTokenSource().Token));
+        }
+
+        [HttpPatch("{id}")]
+        public async Task<ItemDto> UpdateItem(Guid id, UpdateItemRequestDto requestDto)
+        {
+            return ItemMapping.Map(await _items.UpdateItemAsync(id, ItemMapping.Map(requestDto), new CancellationTokenSource().Token));
         }
 
         

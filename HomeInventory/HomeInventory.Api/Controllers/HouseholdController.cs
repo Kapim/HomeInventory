@@ -9,7 +9,7 @@ using System.Security.Authentication;
 namespace HomeInventory.Api.Controllers
 {
     [ApiController]
-    [Route("api/household")]
+    [Route("api/households")]
     [Authorize]
     public class HouseholdController(IHouseholdUseCase households) : ControllerBase
     {
@@ -31,6 +31,12 @@ namespace HomeInventory.Api.Controllers
         public async Task<List<HouseholdDto>> GetHouseholds()
         {
             return [.. (await _households.GetHouseholdsAsync()).Select(x => HouseholdMapping.Map(x))];
+        }
+
+        [HttpGet("{id}/locations")]
+        public async Task<List<LocationListItemDto>> GetLocations(string id)
+        {
+            return [.. (await _households.GetLocationsAsync(Guid.Parse(id))).Select(x => LocationMapping.MapListItem(x))];
         }
     }
 

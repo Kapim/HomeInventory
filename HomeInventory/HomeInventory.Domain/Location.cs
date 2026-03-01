@@ -18,7 +18,7 @@ namespace HomeInventory.Domain
         public LocationType LocationType { get; set; }
 
         public Guid? ParentLocationId { get; private set; } // no cycles allowed, null means root (rooms typically)
-        public int SortOrder { get; private set; } // ordering of the nodes in the GUI
+        public int SortOrder { get; set; } // ordering of the nodes in the GUI
         public string? Description { get; private set; } // user description of the location (e.g. "black box on the top shelf")
 
         private Location() { }

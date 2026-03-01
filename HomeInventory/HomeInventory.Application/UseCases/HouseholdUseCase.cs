@@ -22,5 +22,9 @@ namespace HomeInventory.Application.UseCases
             return await _households.GetHouseholdsAsync(new CancellationTokenSource().Token);
         }
 
+        public async Task<IReadOnlyList<Location>> GetLocationsAsync(Guid householdId)
+        {
+            return await _households.GetLocationsAsync(householdId, new CancellationTokenSource().Token);
+        }
     }
 }

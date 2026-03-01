@@ -34,9 +34,9 @@ namespace HomeInventory.Infrastructure.Repositories
             return (await _db.Items.FindAsync([itemId], ct)) != null;
         }
 
-        public async Task<IReadOnlyList<Item>> FindByNameAsync(Guid ownerUserId, string name, CancellationToken ct = default)
+        public async Task<IReadOnlyList<Item>> FindByNameAsync(string name, CancellationToken ct = default)
         {
-            return await _db.Items.Where(x => x.OwnerUserId == ownerUserId && x.NormalizedName.Contains(name.ToLowerInvariant())).ToListAsync(ct);
+            return await _db.Items.Where(x => x.NormalizedName.Contains(name.ToLowerInvariant())).ToListAsync(ct);
         }
 
         public async Task<IReadOnlyList<Item>> GetAllForUserAsync(Guid ownerUserId, CancellationToken ct = default)
@@ -49,15 +49,18 @@ namespace HomeInventory.Infrastructure.Repositories
             return await _db.Items.FindAsync([itemId], ct);
         }
 
-        public async Task<IReadOnlyList<Item>> GetByLocationAsync(Guid ownerUserId, Guid locationId, CancellationToken ct = default)
+        public async Task<IReadOnlyList<Item>> GetByLocationAsync(Guid locationId, CancellationToken ct = default)
         {
-            return await _db.Items.Where(x => x.OwnerUserId == ownerUserId && x.LocationId == locationId).ToListAsync(ct);
+            return await _db.Items.Where(x => x.LocationId == locationId).ToListAsync(ct);
         }
 
-        public async Task UpdateAsync(Item item, CancellationToken ct = default)
+        
+
+        public async Task<Item> UpdateAsync(Item item, CancellationToken ct = default)
         {
             _db.Items.Update(item);
             await _db.SaveChangesAsync(ct);
+            return item;
         }
     }
 }

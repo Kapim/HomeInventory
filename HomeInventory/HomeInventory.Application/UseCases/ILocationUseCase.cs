@@ -1,8 +1,6 @@
-﻿using HomeInventory.Domain;
+﻿using HomeInventory.Application.Models;
+using HomeInventory.Domain;
 using HomeInventory.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HomeInventory.Application.UseCases
 {
@@ -16,5 +14,7 @@ namespace HomeInventory.Application.UseCases
         public Task<IReadOnlyList<Location>> FindByNameAsync(string name, Guid? parentId = null);
 
         public Task<IReadOnlyList<Location>> SearchAsync(string name, Guid? withinParentId = null, int limit = 50);
+        public Task<Location> UpdateAsync(Guid id, LocationUpdateRequest request, CancellationToken ct);
+        public Task<IReadOnlyList<Item>> GetItemsAsync(Guid locationId, CancellationToken ct);
     }
 }

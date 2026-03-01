@@ -24,8 +24,20 @@ public static class ClientServiceCollectionExtensions
             c.BaseAddress = baseAddress;
         }).AddHttpMessageHandler<AuthHeaderHandler>();
 
+        services.AddHttpClient<ILocationsApiClient, HttpLocationsClient>(c =>
+        {
+            c.BaseAddress = baseAddress;
+        }).AddHttpMessageHandler<AuthHeaderHandler>();
+
+        services.AddHttpClient<IItemsApiClient, HttpItemsClient>(c =>
+        {
+            c.BaseAddress = baseAddress;
+        }).AddHttpMessageHandler<AuthHeaderHandler>();
+
         services.AddSingleton<IAuthService, AuthService>();
         services.AddTransient<IHouseholdsService, HouseholdsService>();
+        services.AddTransient<ILocationsService, LocationService>();
+        services.AddTransient<IItemsService, ItemsService>();
 
 
         return services;

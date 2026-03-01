@@ -11,5 +11,11 @@ namespace HomeInventory.Desktop.Wpf.Services
         {
             MessageBox.Show(message, title);
         }
+
+        //TODO: change to some error dialog
+        public void ShowError(string title, string message)
+        {
+            ShowInfo(title, message);
+        }
     }
 }
