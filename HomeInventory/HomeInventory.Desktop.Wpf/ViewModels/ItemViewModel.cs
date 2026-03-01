@@ -8,26 +8,24 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 {
     public partial class ItemViewModel : ObservableObject
     {
-        private readonly IItemsService _items;
-        private readonly IDialogService _dialogs;
         public readonly Item? Item;
         [ObservableProperty]
         private string? name;
         [ObservableProperty]
         private string? placementNote, description;
+        [ObservableProperty]
+        private int quantity;
         private readonly Func<ItemViewModel, string, Task> _itemNameChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemDescriptionChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemPlacementNoteChanged;
 
-        public ItemViewModel(IItemsService items, 
-            IDialogService dialogService, 
-            Func<ItemViewModel, string, Task> itemNameChangedCallback,
+        public bool IsNew => Item == null;
+
+        public ItemViewModel(Func<ItemViewModel, string, Task> itemNameChangedCallback,
             Func<ItemViewModel, string?, Task> itemDescriptionChanged,
             Func<ItemViewModel, string?, Task> itemPlacementNoteChanged,
         Item? item = null)
         {         
-            _items = items;
-            _dialogs = dialogService;
             _itemNameChanged = itemNameChangedCallback;
             _itemDescriptionChanged = itemDescriptionChanged;
             _itemPlacementNoteChanged = itemPlacementNoteChanged;

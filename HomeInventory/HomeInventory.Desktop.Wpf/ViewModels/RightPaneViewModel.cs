@@ -16,6 +16,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
+        private bool addingNewItem = false;
+
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
@@ -24,15 +26,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             var items = await _locations.GetItemsAsync(location.Id, ct);
             foreach (var item in items)
             {
-                Items.Add(new ItemViewModel(_items, _dialogs, ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
+                Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
             }
         }
 
         public void AddNewItem()
         {
-            var row = new ItemViewModel(_items, _dialogs, ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, null);
+            if (addingNewItem)
+            {
+                _dialogs.ShowInfo("Failed to add a new item", "Finish a new item first by adding a name");
+                return;
+            }
+            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, null);
             Items.Add(row);
-            SelectedItem = row; 
+            SelectedItem = row;
+            addingNewItem = true;
         }
 
         private async Task ItemNameChanged(ItemViewModel itemViewModel, string newName)
@@ -41,11 +49,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 throw new NullReferenceException("Location was not loaded!");
             try
             {
-                if (itemViewModel.Item == null)
-                    await _items.CreateAsync(new(newName, 0, _location.Id, _location.Id, default, default), new CancellationTokenSource().Token);
+                if (itemViewModel.IsNew)
+                {
+                    await _items.CreateAsync(new(newName, 0, _location.Id, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    addingNewItem = false; 
+                }
                 else
                 {
-                    itemViewModel.Item.ChangeName(newName);
+                    itemViewModel.Item!.ChangeName(newName);
                     await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
                 }
             }
@@ -57,11 +68,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         private async Task ItemDescriptionChanged(ItemViewModel itemViewModel, string? newDescription)
         {
-            if (itemViewModel.Item == null)
-                throw new ArgumentNullException("itemViewModel.Item");
+            if (itemViewModel.IsNew)
+            {
+                itemViewModel.Description = newDescription;
+                return;
+            }
             try
             {
-                itemViewModel.Item.Description = newDescription;
+                itemViewModel.Item!.Description = newDescription;
                 await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
             }
             catch (ArgumentException ex)
@@ -72,11 +86,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         private async Task ItemPlaceNoteChanged(ItemViewModel itemViewModel, string? newPlaceNote)
         {
-            if (itemViewModel.Item == null)
-                throw new ArgumentNullException("itemViewModel.Item");
+            if (itemViewModel.IsNew)
+            {
+                itemViewModel.PlacementNote = newPlaceNote;
+                return; 
+            }
             try
             {
-                itemViewModel.Item.PlacementNote = newPlaceNote;
+                itemViewModel.Item!.PlacementNote = newPlaceNote;
                 await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
             }
             catch (ArgumentException ex)

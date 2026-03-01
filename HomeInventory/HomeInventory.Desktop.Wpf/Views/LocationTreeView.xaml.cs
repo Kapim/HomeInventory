@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HomeInventory.Desktop.Wpf.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -21,6 +22,14 @@ namespace HomeInventory.Desktop.Wpf.Views
         public LocationTreeView()
         {
             InitializeComponent();
+        }
+
+        private void TreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (DataContext is not LocationTreeViewModel vm) return;
+
+            if (e.NewValue is LocationNodeViewModel location)
+                vm.SelectedLocation = location;
         }
     }
 }

@@ -22,9 +22,11 @@ namespace HomeInventory.Api.Controllers
             if (item == null)
             {
                 return NotFound();
-            }               
-            
-            return ItemMapping.Map(item!);
+            } else
+            {
+                return ItemMapping.Map(item!);
+            }
+
         }
 
         [HttpPost]
