@@ -20,7 +20,6 @@ namespace HomeInventory.Api.Mapping
             new(request.Name,
                 request.Quantity,
                 request.LocationId,
-                request.OwnerId,
                 request.PlacementNote,
                 request.Description);
 
@@ -28,7 +27,6 @@ namespace HomeInventory.Api.Mapping
             new(request.Name,
                 request.Quantity,
                 request.LocationId,
-                request.OwnerId,
                 request.PlacementNote,
                 request.Description);
 

@@ -1,11 +1,7 @@
-﻿using HomeInventory.Client.Models;
-using HomeInventory.Client.Services.Interfaces;
+﻿using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Contracts;
 using HomeInventory.Contracts.Requests;
-using System;
-using System.Collections.Generic;
 using System.Net.Http.Json;
-using System.Text;
 
 namespace HomeInventory.Client.Http
 {
@@ -112,5 +108,6 @@ namespace HomeInventory.Client.Http
                 throw new ApiUnavailableException("Unable to connect to server", ex);
             }
         }
+
     }
 }

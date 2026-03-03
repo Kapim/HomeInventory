@@ -13,9 +13,9 @@ namespace HomeInventory.Application.UseCases
         private readonly IItemRepository _items = items;
 
 
-        public async Task<Item> AddItemAsync(ItemCreateRequest request, CancellationToken ct)
+        public async Task<Item> AddItemAsync(ItemCreateRequest request, Guid ownerId, CancellationToken ct)
         {
-            Item item = new(request.Name, request.OwnerId, request.LocationId);
+            Item item = new(request.Name, ownerId, request.LocationId);
             item.Quantity = request.Quantity;
             item.PlacementNote = request.PlacementNote;
             item.Description = request.Description;

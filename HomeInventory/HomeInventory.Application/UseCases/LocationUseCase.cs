@@ -9,26 +9,18 @@ namespace HomeInventory.Application.UseCases
     {
         private readonly ILocationRepository _locations = locations;
         private readonly IItemRepository _items = items;
-        public async Task<Location> GetLocationAsync(Guid id)
+        public async Task<Location> GetLocationAsync(Guid id, CancellationToken ct)
         {
             return await _locations.GetByIdAsync(id, new CancellationTokenSource().Token);
         }
 
-        public async Task AddLocation(string name, Guid houseHoldId, Guid ownerUserId, Guid? parentLocationId = default, LocationType locationType = LocationType.Other)
-        {
-            Location location = new(name, houseHoldId, ownerUserId);
-            location.MoveTo(parentLocationId);
-            location.LocationType = locationType;
-            await _locations.AddAsync(location);
-            return;
-        }
 
-        public async Task<IReadOnlyList<Location>> FindByNameAsync(string name, Guid? parentId = null)
+        public async Task<IReadOnlyList<Location>> FindByNameAsync(string name, Guid? parentId = null, CancellationToken ct = default)
         {
             return await _locations.FindByNameAsync(name, parentId, new CancellationTokenSource().Token);
         }
 
-        public async Task<IReadOnlyList<Location>> SearchAsync(string name, Guid? withinParentId = null, int limit = 50)
+        public async Task<IReadOnlyList<Location>> SearchAsync(string name, Guid? withinParentId = null, int limit = 50, CancellationToken ct = default)
         {
             return await _locations.SearchAsync(name, withinParentId, limit, new CancellationTokenSource().Token);
         }
@@ -47,7 +39,16 @@ namespace HomeInventory.Application.UseCases
 
         public async Task<IReadOnlyList<Item>> GetItemsAsync(Guid locationId, CancellationToken ct)
         {
-            return await _items.GetByLocationAsync(locationId);
+            return await _items.GetByLocationAsync(locationId, ct);
+        }
+
+        public async Task<Location> AddLocationAsync(LocationCreateRequest request, CancellationToken ct)
+        {
+            Location location = new(request.Name, request.HouseholdId, request.OwnerId);
+            location.MoveTo(request.ParentLocationId);
+            location.LocationType = request.LocationType;
+            await _locations.AddAsync(location, ct);
+            return location;
         }
     }
 }

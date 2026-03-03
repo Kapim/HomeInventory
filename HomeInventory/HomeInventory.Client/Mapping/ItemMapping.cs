@@ -43,7 +43,6 @@ namespace HomeInventory.Client.Mapping
             new(requestDto.Name,
                 requestDto.Quantity,
                 requestDto.LocationId,
-                requestDto.OwnerId,
                 requestDto.PlacementNote,
                 requestDto.Description);
 
@@ -51,7 +50,6 @@ namespace HomeInventory.Client.Mapping
             new(request.Name,
                 request.Quantity,
                 request.LocationId,
-                request.OwnerId,
                 request.PlacementNote,
                 request.Description);
     }

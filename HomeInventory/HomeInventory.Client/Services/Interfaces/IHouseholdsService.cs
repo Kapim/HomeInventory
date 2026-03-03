@@ -8,7 +8,7 @@ namespace HomeInventory.Client.Services.Interfaces
     {
         Task<Household> GetByIdAsync(Guid householdId, CancellationToken ct);
         Task<IReadOnlyList<Household>> GetAllAsync(CancellationToken ct);
-        Task<Household> CreateAsync(Guid ownerId, string name, CancellationToken ct);
+        Task<Household> CreateAsync(string name, CancellationToken ct);
         Task<IReadOnlyList<LocationListItem>> GetLocationsAsync(Guid householdId, CancellationToken ct);
         Task<IReadOnlyList<Item>> GetItemsAsync(Guid householdId, CancellationToken ct);
     }

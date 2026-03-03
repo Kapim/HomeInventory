@@ -51,7 +51,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 if (itemViewModel.IsNew)
                 {
-                    await _items.CreateAsync(new(newName, 0, _location.Id, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
                     addingNewItem = false; 
                 }
                 else

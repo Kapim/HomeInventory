@@ -1,4 +1,5 @@
-﻿using HomeInventory.Contracts;
+﻿using HomeInventory.Client.Requests;
+using HomeInventory.Contracts;
 using HomeInventory.Contracts.Requests;
 using System;
 using System.Collections.Generic;
@@ -13,5 +14,6 @@ namespace HomeInventory.Client.Services.Interfaces
         Task<LocationDto> UpdateAsync(Guid id, UpdateLocationRequestDto request, CancellationToken ct);
         Task DeleteAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<ItemDto>> GetItemsAsync(Guid locationId, CancellationToken ct);
+        Task<LocationDto> CreateAsync(CreateLocationRequestDto request, CancellationToken ct);
     }
 }

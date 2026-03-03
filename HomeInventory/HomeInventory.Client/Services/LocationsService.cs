@@ -14,6 +14,12 @@ namespace HomeInventory.Client.Services
     {
         private readonly ILocationsApiClient _apiClient = apiClient;
 
+        public async Task<Location> CreateLocationAsync(LocationCreateRequest request, CancellationToken ct)
+        {
+            return LocationMapping.Map(await _apiClient.CreateAsync(LocationMapping.Map(request), ct));
+        }
+
+
         public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
             await _apiClient.DeleteAsync(id, ct);
@@ -54,5 +60,7 @@ namespace HomeInventory.Client.Services
         {
             return LocationMapping.Map(await _apiClient.UpdateAsync(id, LocationMapping.Map(request), ct));
         }
+
+        
     }
 }

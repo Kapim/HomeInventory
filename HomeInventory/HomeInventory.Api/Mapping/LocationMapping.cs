@@ -30,5 +30,14 @@ namespace HomeInventory.Api.Mapping
                 request.parentLocationId,
                 request.SortOrder,
                 request.Description);
+
+        public static LocationCreateRequest Map(CreateLocationRequestDto request, Guid ownerId) =>
+            new(request.Name,
+                LocationTypeMapping.Map(request.LocationType),
+                request.ParentLocationId,
+                request.SortOrder,
+                request.Description,
+                request.HouseholdId,
+                ownerId);
     }
 }

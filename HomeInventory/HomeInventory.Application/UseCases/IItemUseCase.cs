@@ -8,7 +8,7 @@ namespace HomeInventory.Application.UseCases
 {
     public interface IItemUseCase
     {
-        public Task<Item> AddItemAsync(ItemCreateRequest request, CancellationToken ct);
+        public Task<Item> AddItemAsync(ItemCreateRequest request, Guid ownerId, CancellationToken ct);
 
         public Task<Item?> GetItemAsync(Guid itemId, CancellationToken ct);
 

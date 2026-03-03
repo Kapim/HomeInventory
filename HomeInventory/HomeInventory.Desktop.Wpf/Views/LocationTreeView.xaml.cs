@@ -1,17 +1,7 @@
 ﻿using HomeInventory.Desktop.Wpf.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
 namespace HomeInventory.Desktop.Wpf.Views
 {
     /// <summary>
@@ -30,6 +20,33 @@ namespace HomeInventory.Desktop.Wpf.Views
 
             if (e.NewValue is LocationNodeViewModel location)
                 vm.SelectedLocation = location;
+            else
+                return;
+
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!location.IsEditing) return;
+
+                var tb = FindVisualChild<TextBox>((DependencyObject)sender);
+                tb?.Focus();
+                tb?.SelectAll();
+
+            }), System.Windows.Threading.DispatcherPriority.Background);
+
+        }
+
+
+        private static T? FindVisualChild<T>(DependencyObject obj) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                var child = VisualTreeHelper.GetChild(obj, i);
+                if (child is T t) return t;
+
+                var nested = FindVisualChild<T>(child);
+                if (nested != null) return nested;
+            }
+            return null;
         }
     }
 }

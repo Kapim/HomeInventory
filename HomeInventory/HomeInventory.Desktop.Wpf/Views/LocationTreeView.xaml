@@ -5,13 +5,47 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:vm="clr-namespace:HomeInventory.Desktop.Wpf.ViewModels"
              xmlns:local="clr-namespace:HomeInventory.Desktop.Wpf.Views"
+             xmlns:extensions="clr-namespace:HomeInventory.Desktop.Wpf.Extensions"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <TreeView ItemsSource="{Binding RootLocations}" SelectedItemChanged="TreeView_SelectedItemChanged">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                </Style>
+            </TreeView.ItemContainerStyle>
             <TreeView.Resources>
                 <HierarchicalDataTemplate DataType="{x:Type vm:LocationNodeViewModel}" ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                    <!-- normal view-->
+                    <TextBlock x:Name="DisplayText" 
+                        Text="{Binding Name}" />
+                    
+                    <!-- edit mode-->
+                    <TextBox x:Name="EditBox"
+                               Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                               extensions:FocusExtensions.IsFocused="{Binding ShouldFocusName, Mode=TwoWay}"
+                               Visibility="Collapsed"
+                               MinWidth="160">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter"
+                                    Command="{Binding DataContext.CommitEditCommand, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+                            <KeyBinding Key="Escape"
+                                    Command="{Binding DataContext.CancelEditCommand, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    </Grid>
+                    <HierarchicalDataTemplate.Triggers>
+                        <DataTrigger Binding="{Binding IsEditing}" Value="True">
+                            <Setter TargetName="DisplayText" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="EditBox" Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                    </HierarchicalDataTemplate.Triggers>
                 </HierarchicalDataTemplate>
             </TreeView.Resources>
         </TreeView>

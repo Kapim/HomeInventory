@@ -38,8 +38,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             TopBar.AddItemEvent += TopBar_AddItemEvent;
+            TopBar.AddLocationEvent += TopBar_AddLocationEvent;
             LocationTree.OnSelectedLocationChangedEvent += SetActiveLocationAsync;
 
+        }
+
+        private void TopBar_AddLocationEvent(object? sender, EventArgs e)
+        {
+            LocationTree.AddLocation();
         }
 
         private void TopBar_AddItemEvent(object? sender, EventArgs e)
@@ -50,7 +56,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private async void SetActiveLocationAsync(object? sender, LocationNodeViewModel? location)
         {
             if (location != null)
+            {
                 await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
+            }
         }
 
         public async Task InitializeAsync(CancellationToken ct = default)

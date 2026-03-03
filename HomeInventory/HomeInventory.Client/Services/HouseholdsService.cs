@@ -24,9 +24,9 @@ namespace HomeInventory.Client.Services
             return HouseholdMapping.Map(await _apiClient.GetByIdAsync(householdId, ct));
         }
 
-        public async Task<Household> CreateAsync(Guid ownerId, string name, CancellationToken ct)
+        public async Task<Household> CreateAsync(string name, CancellationToken ct)
         {
-            CreateHouseholdRequestDto request = new(ownerId, name);
+            CreateHouseholdRequestDto request = new(name);
             return HouseholdMapping.Map(await _apiClient.CreateAsync(request, ct));
         }
 

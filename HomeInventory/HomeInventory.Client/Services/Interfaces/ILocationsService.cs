@@ -1,7 +1,5 @@
 ﻿using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
-using HomeInventory.Contracts;
-using HomeInventory.Contracts.Requests;
 
 namespace HomeInventory.Client.Services.Interfaces
 {
@@ -14,5 +12,6 @@ namespace HomeInventory.Client.Services.Interfaces
         Task<Location> UpdateAsync(Guid id, LocationUpdateRequest request, CancellationToken ct);
         Task DeleteAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<Item>> GetItemsAsync(Guid id, CancellationToken ct);
+        Task<Location> CreateLocationAsync(LocationCreateRequest request, CancellationToken ct);
     }
 }

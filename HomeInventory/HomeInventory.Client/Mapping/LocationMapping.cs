@@ -40,5 +40,21 @@ namespace HomeInventory.Client.Mapping
                 locationUpdateRequest.SortOrder,
                 locationUpdateRequest.Description,
                 locationUpdateRequest.ParentLocationId);
+
+        public static CreateLocationRequestDto Map(LocationCreateRequest request) =>
+            new(request.Name,
+                LocationTypeMapping.Map(request.LocationType),
+                request.ParentLocationId,
+                request.SortOrder,
+                request.Description,
+                request.HouseholdId);
+
+        public static LocationCreateRequest Map(CreateLocationRequestDto request) =>
+            new(request.Name,
+                LocationTypeMapping.Map(request.LocationType),
+                request.ParentLocationId,
+                request.SortOrder,
+                request.Description,
+                request.HouseholdId);
     }
 }

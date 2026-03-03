@@ -8,7 +8,6 @@ namespace HomeInventory.Application.Models
     public sealed record ItemCreateRequest(string Name,
         int Quantity,
         Guid LocationId,
-        Guid OwnerId,
         string? PlacementNote,
         string? Description);
 }

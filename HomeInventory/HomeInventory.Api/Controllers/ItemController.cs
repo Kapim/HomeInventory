@@ -6,6 +6,7 @@ using HomeInventory.Contracts.Requests;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Security.Authentication;
+using System.Security.Claims;
 
 namespace HomeInventory.Api.Controllers
 {
@@ -30,9 +31,12 @@ namespace HomeInventory.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<ItemDto> AddItem(CreateItemRequestDto createItemRequestDto)
+        public async Task<ActionResult<ItemDto>> AddItem(CreateItemRequestDto createItemRequestDto)
         {
-            return ItemMapping.Map(await _items.AddItemAsync(ItemMapping.Map(createItemRequestDto), new CancellationTokenSource().Token));
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim is null)
+                return Unauthorized();
+            return ItemMapping.Map(await _items.AddItemAsync(ItemMapping.Map(createItemRequestDto), Guid.Parse(userIdClaim), new CancellationTokenSource().Token));
         }
 
         [HttpPatch("{id}")]
