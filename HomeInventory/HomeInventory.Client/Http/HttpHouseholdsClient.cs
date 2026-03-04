@@ -1,4 +1,6 @@
-﻿using HomeInventory.Client.Services.Interfaces;
+﻿using HomeInventory.Client.Errors;
+using HomeInventory.Client.Mapping;
+using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Contracts;
 using HomeInventory.Contracts.Requests;
 using System;
@@ -19,17 +21,22 @@ namespace HomeInventory.Client.Http
             {
                 using var resp = await _http.PostAsJsonAsync("api/households", request, ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<HouseholdDto>(ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Unable to connect to server", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
 
@@ -39,17 +46,22 @@ namespace HomeInventory.Client.Http
             {
                 using var resp = await _http.GetAsync("api/households", ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<IReadOnlyList<HouseholdDto>>(ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Unable to connect to server", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
 
@@ -59,17 +71,22 @@ namespace HomeInventory.Client.Http
             {
                 using var resp = await _http.GetAsync($"api/households/{householdId}", ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<HouseholdDto>(ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Unable to connect to server", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
 
@@ -79,17 +96,22 @@ namespace HomeInventory.Client.Http
             {
                 using var resp = await _http.GetAsync($"api/households/{householdId}/items", ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<IReadOnlyList<ItemDto>> (ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Unable to connect to server", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
 
@@ -99,17 +121,22 @@ namespace HomeInventory.Client.Http
             {
                 using var resp = await _http.GetAsync($"api/households/{householdId}/locations", ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<IReadOnlyList<LocationListItemDto>>(ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Unable to connect to server", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
     }
