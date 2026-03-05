@@ -1,4 +1,5 @@
 ﻿using HomeInventory.Client.Errors;
+using HomeInventory.Client.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,21 +8,21 @@ namespace HomeInventory.Client.Mapping
 {
     public static class HttpErrorMapper
     {
-        public static ApiException Map(HttpResponseMessage response, string? bode = null)
+        public static ApiException Map(HttpResponseMessage response, string? body = null)
         {
             var code = (int)response.StatusCode;
             return code switch
             {
-                400 => new ApiException(ApiErrorTypes.Validation, "Neplatný požadavek", code),
-                401 => new ApiException(ApiErrorTypes.Unauthorized, "Nejste přihlášený", code),
-                403 => new ApiException(ApiErrorTypes.Forbidden, "Nemáte oprávnění", code),
-                404 => new ApiException(ApiErrorTypes.NotFound, "Položka nebyla nalezena", code),
-                409 => new ApiException(ApiErrorTypes.Conflict, "Konflikt dat", code),
-                500 => new ApiException(ApiErrorTypes.Server, "Chyba server", code),
-                _ => new ApiException(ApiErrorTypes.Unknown, "Neočekávaná chyba", code)
+                400 => new ApiException(ApiErrorTypes.Validation, body ?? string.Empty, code),
+                401 => new ApiException(ApiErrorTypes.Unauthorized, body ?? string.Empty, code),
+                403 => new ApiException(ApiErrorTypes.Forbidden, body ?? string.Empty, code),
+                404 => new ApiException(ApiErrorTypes.NotFound, body ?? string.Empty, code),
+                409 => new ApiException(ApiErrorTypes.Conflict, body ?? string.Empty, code),
+                500 => new ApiException(ApiErrorTypes.Server, body ?? string.Empty, code),
+                _ => new ApiException(ApiErrorTypes.Unknown, body ?? string.Empty, code)
             };
         }
 
-        public static ApiException MapNetwork(Exception ex) => new(ApiErrorTypes.Network, "Nelze se připojit k serveru.", null, ex);
+        public static ApiException MapNetwork(Exception ex) => new(ApiErrorTypes.Network, string.Empty, null, ex);
     }
 }
