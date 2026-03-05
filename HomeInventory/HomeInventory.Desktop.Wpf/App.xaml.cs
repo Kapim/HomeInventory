@@ -1,6 +1,7 @@
 ﻿using HomeInventory.Client;
 using HomeInventory.Client.Auth;
 using HomeInventory.Client.Http;
+using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using HomeInventory.Desktop.Wpf.Services.Navigation;
 using HomeInventory.Desktop.Wpf.ViewModels;
@@ -41,6 +42,7 @@ namespace HomeInventory.Desktop.Wpf
 
                     services.AddSingleton<IDialogService, DialogService>();
                     services.AddSingleton<INavigationService, NavigationService>();
+                    services.AddSingleton<IErrorLocalizer, ErrorLocalizerService>();
 
                     services.AddHomeInventoryClient(new Uri("http://localhost:5046/"));
 

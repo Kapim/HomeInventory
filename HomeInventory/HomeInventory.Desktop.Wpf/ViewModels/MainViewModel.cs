@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using HomeInventory.Client.Errors;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Services;
 using HomeInventory.Client.Services.Interfaces;
@@ -21,20 +22,23 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public RightPaneViewModel RightPane { get; }
 
         private readonly IHouseholdsService _householdsService;
-        private readonly ILocationsService _locationsService;
+        private readonly IErrorLocalizer _errorLocalizer;
+        private readonly IDialogService _dialogService;
         public ObservableCollection<Household> Households = [];
 
         public MainViewModel(TopBarViewModel topBar,
             LocationTreeViewModel locationTree,
             RightPaneViewModel rightPaneViewModel,
             IHouseholdsService householdsService,
-            ILocationsService locationsService)
+            IErrorLocalizer errorLocalizer,
+            IDialogService dialogService)
         {
             TopBar = topBar;
             LocationTree = locationTree;
             RightPane = rightPaneViewModel;
             _householdsService = householdsService;
-            _locationsService = locationsService;
+            _errorLocalizer = errorLocalizer;
+            _dialogService = dialogService;
 
             TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             TopBar.AddItemEvent += TopBar_AddItemEvent;
@@ -63,10 +67,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public async Task InitializeAsync(CancellationToken ct = default)
         {
-            var h = await _householdsService.GetAllAsync(new CancellationTokenSource().Token);
-            Households = new ObservableCollection<Household>(h);
-            TopBar.Households = Households;
-            TopBar.SelectedHousehold = Households.FirstOrDefault();
+            try
+            {
+                var h = await _householdsService.GetAllAsync(new CancellationTokenSource().Token);
+                Households = new ObservableCollection<Household>(h);
+                TopBar.Households = Households;
+                TopBar.SelectedHousehold = Households.FirstOrDefault();
+            } catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogService.ShowError("Operace selhala", message);
+            }
+            
         }
 
         private async void SetActiveHouseholdAsync(object? sender, Household? h)
