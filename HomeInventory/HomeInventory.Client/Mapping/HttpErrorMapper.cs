@@ -19,6 +19,7 @@ namespace HomeInventory.Client.Mapping
                 404 => new ApiException(ApiErrorTypes.NotFound, body ?? string.Empty, code),
                 409 => new ApiException(ApiErrorTypes.Conflict, body ?? string.Empty, code),
                 500 => new ApiException(ApiErrorTypes.Server, body ?? string.Empty, code),
+
                 _ => new ApiException(ApiErrorTypes.Unknown, body ?? string.Empty, code)
             };
         }

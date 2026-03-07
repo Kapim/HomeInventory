@@ -15,10 +15,14 @@ namespace HomeInventory.Client.Services.Interfaces
         public string GetString(string key)
         {
             ArgumentNullException.ThrowIfNull(key);
-
-            var result = _resourceManager.GetString(key, _currentCulture);
-            
-            return result ?? throw new KeyNotFoundException(nameof(key));
+            try
+            {
+                var result = _resourceManager.GetString(key, _currentCulture);
+                return result ?? throw new KeyNotFoundException(nameof(key));
+            } catch (MissingManifestResourceException)
+            {
+                throw new KeyNotFoundException(nameof(key));
+            }
         }
 
         public void SetCulture(string cultureCode)
@@ -37,9 +41,8 @@ namespace HomeInventory.Client.Services.Interfaces
                 ApiErrorTypes.Conflict => GetString("ApiErrorConflict"),
                 ApiErrorTypes.Server => GetString("ApiErrorServer"),
                 ApiErrorTypes.Network => GetString("ApiErrorNetwork"),
-                ApiErrorTypes.InvalidResponse => GetString("ApiErrorInvalidResponse"),
                 ApiErrorTypes.Unknown => GetString("ApiErrorUnknown"),
-                _ => throw new NotImplementedException(),
+                _ => throw new KeyNotFoundException(),
             };
         }
     }
