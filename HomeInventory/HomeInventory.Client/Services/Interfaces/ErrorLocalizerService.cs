@@ -41,6 +41,7 @@ namespace HomeInventory.Client.Services.Interfaces
                 ApiErrorTypes.Conflict => GetString("ApiErrorConflict"),
                 ApiErrorTypes.Server => GetString("ApiErrorServer"),
                 ApiErrorTypes.Network => GetString("ApiErrorNetwork"),
+                ApiErrorTypes.InvalidResponse => GetString("ApiErrorInvalidResponse"),
                 ApiErrorTypes.Unknown => GetString("ApiErrorUnknown"),
                 _ => throw new KeyNotFoundException(),
             };

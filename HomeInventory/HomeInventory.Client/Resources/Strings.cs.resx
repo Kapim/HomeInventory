@@ -123,6 +123,9 @@
   <data name="ApiErrorForbidden" xml:space="preserve">
     <value>Nemáte oprávnění</value>
   </data>
+  <data name="ApiErrorInvalidResponse" xml:space="preserve">
+    <value>Neplatná odpověď</value>
+  </data>
   <data name="ApiErrorNetwork" xml:space="preserve">
     <value>Nelze se připojit k serveru</value>
   </data>

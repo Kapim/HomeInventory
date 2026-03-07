@@ -11,6 +11,7 @@ namespace HomeInventory.Client.Mapping
         public static ApiException Map(HttpResponseMessage response, string? body = null)
         {
             var code = (int)response.StatusCode;
+            if (code >= 500) return new ApiException(ApiErrorTypes.Server, body ?? string.Empty, code);
             return code switch
             {
                 400 => new ApiException(ApiErrorTypes.Validation, body ?? string.Empty, code),
@@ -18,8 +19,6 @@ namespace HomeInventory.Client.Mapping
                 403 => new ApiException(ApiErrorTypes.Forbidden, body ?? string.Empty, code),
                 404 => new ApiException(ApiErrorTypes.NotFound, body ?? string.Empty, code),
                 409 => new ApiException(ApiErrorTypes.Conflict, body ?? string.Empty, code),
-                500 => new ApiException(ApiErrorTypes.Server, body ?? string.Empty, code),
-
                 _ => new ApiException(ApiErrorTypes.Unknown, body ?? string.Empty, code)
             };
         }
