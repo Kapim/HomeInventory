@@ -30,14 +30,13 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             try
             {
                 var result = await _auth.LoginAsync(UserName, Password);
-                Debug.WriteLine(result);
+                await _nav.NavigateTo<MainViewModel>();
             }  catch (ApiException ex)
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
             }
 
-            await _nav.NavigateTo<MainViewModel>();
         }
 
         private bool CanLogin()
