@@ -1,4 +1,6 @@
 ﻿using HomeInventory.Client.Auth;
+using HomeInventory.Client.Errors;
+using HomeInventory.Client.Mapping;
 using HomeInventory.Contracts;
 using HomeInventory.Contracts.Requests;
 using System;
@@ -19,17 +21,22 @@ namespace HomeInventory.Client.Http
                 
                 using var resp = await _http.PostAsJsonAsync("api/auth/login", request, ct);
 
-                if (resp.StatusCode is System.Net.HttpStatusCode.Forbidden or System.Net.HttpStatusCode.Unauthorized)
-                    throw new InvalidCredentialsException();
-
-                resp.EnsureSuccessStatusCode();
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
 
                 var result = await resp.Content.ReadFromJsonAsync<LoginResponseDto>(ct);
-                return result ?? throw new InvalidOperationException("Empty response body.");
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
             }
             catch (HttpRequestException ex)
             {
-                throw new ApiUnavailableException("Nelze se připojit k serveru.", ex);
+                throw HttpErrorMapper.MapNetwork(ex);
+            } 
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
             }
         }
 
