@@ -1,5 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HomeInventory.Client.Errors;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
@@ -14,10 +15,12 @@ using System.Windows.Ink;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class LocationTreeViewModel(IHouseholdsService householdsService, ILocationsService locationsService) : ObservableObject
+    public partial class LocationTreeViewModel(IHouseholdsService householdsService, ILocationsService locationsService, IErrorLocalizer errorLocalizer, IDialogService dialogService) : ObservableObject
     {
         private readonly IHouseholdsService _households = householdsService;
         private readonly ILocationsService _locations = locationsService;
+        private readonly IErrorLocalizer _errorLocalizer = errorLocalizer;
+        private readonly IDialogService _dialogService = dialogService;
         [ObservableProperty]
         public ObservableCollection<LocationNodeViewModel> rootLocations = [];
         private Dictionary<Guid, LocationNodeViewModel> _byId = [];
@@ -31,24 +34,31 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public async Task LoadAsync(Guid householdId, CancellationToken ct)
         {
-            var locations = await _households.GetLocationsAsync(householdId, ct);
-            Locations = [.. locations.Select(x => new LocationNodeViewModel(x.Id, x.Name, x.ParentLocationId, x.SortOrder))];
-            _byId = Locations.ToDictionary(x => x.Id);
-
-            foreach (var location in Locations)
-            {
-                if (location.ParentId is Guid parentId && _byId.TryGetValue(parentId, out var parent))
-                {
-                    parent.Children.Add(location);
-                }
-            }
             RootLocations.Clear();
-            foreach (var root in Locations.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder))
-                RootLocations.Add(root);
+            try
+            {
+                var locations = await _households.GetLocationsAsync(householdId, ct);
+                Locations = [.. locations.Select(x => new LocationNodeViewModel(x.Id, x.Name, x.ParentLocationId, x.SortOrder))];
+                _byId = Locations.ToDictionary(x => x.Id);
 
-            if (Locations.Any())
-                SelectedLocation = Locations[0];
-            selectedHouseholdId = householdId;  
+                foreach (var location in Locations)
+                {
+                    if (location.ParentId is Guid parentId && _byId.TryGetValue(parentId, out var parent))
+                    {
+                        parent.Children.Add(location);
+                    }
+                }
+                foreach (var root in Locations.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder))
+                    RootLocations.Add(root);
+
+                SelectedLocation = Locations.Any() ? Locations[0] : null;                   
+                selectedHouseholdId = householdId;
+            } catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogService.ShowError("Operace selhala", message);
+            }
+            
         }
 
         partial void OnSelectedLocationChanged(LocationNodeViewModel? value)
@@ -88,16 +98,31 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             if (location.IsNew)
             {
-                var created = await _locations.CreateLocationAsync(new LocationCreateRequest(location.Name, LocationType.Other, location.ParentId, 0, null, selectedHouseholdId), new CancellationTokenSource().Token);
-                location.FillData(created);
-                location.IsNew = false;
- 
-                location.IsEditing = false;
-                location.ShouldFocusName = false;
-                EditingNode = null;
+                try
+                {
+                    var created = await _locations.CreateLocationAsync(new LocationCreateRequest(location.Name, LocationType.Other, location.ParentId, 0, null, selectedHouseholdId), new CancellationTokenSource().Token);
+                    location.FillData(created);
+                    location.IsNew = false;
+
+                    location.IsEditing = false;
+                    location.ShouldFocusName = false;
+                    EditingNode = null;
+                } catch (ApiException ex)
+                {
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogService.ShowError("Operace selhala", message);
+                }
             } else
             {
-                await _locations.RenameAsync(location.Id, location.Name, new CancellationTokenSource().Token);
+                try
+                {
+                    await _locations.RenameAsync(location.Id, location.Name, new CancellationTokenSource().Token);
+                }
+                catch (ApiException ex)
+                {
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogService.ShowError("Operace selhala", message);
+                }
             }
        
         }

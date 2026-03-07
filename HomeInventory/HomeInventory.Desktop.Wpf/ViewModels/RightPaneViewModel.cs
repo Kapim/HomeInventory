@@ -1,18 +1,20 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using HomeInventory.Client.Errors;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs) : ObservableObject
+    public partial class RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer) : ObservableObject
     {
         public ObservableCollection<ItemViewModel> Items { get; } = [];
 
         private readonly ILocationsService _locations = locations;
         private readonly IItemsService _items = items;
         private readonly IDialogService _dialogs = dialogs;
+        private readonly IErrorLocalizer _errorLocalizer = errorLocalizer;
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
@@ -23,10 +25,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             Items.Clear();
             _location = location;
-            var items = await _locations.GetItemsAsync(location.Id, ct);
-            foreach (var item in items)
+            try
             {
-                Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
+                var items = await _locations.GetItemsAsync(location.Id, ct);
+                foreach (var item in items)
+                {
+                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
+                }
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
             }
         }
 
@@ -47,23 +57,34 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             if (_location is null)
                 throw new NullReferenceException("Location was not loaded!");
-            try
+           
+            if (itemViewModel.IsNew)
             {
-                if (itemViewModel.IsNew)
+                try
                 {
                     await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
-                    addingNewItem = false; 
+                    addingNewItem = false;
                 }
-                else
+                catch (ApiException ex)
                 {
-                    itemViewModel.Item!.ChangeName(newName);
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogs.ShowError("Operace selhala", message);
+                }
+            }
+            else
+            {
+                itemViewModel.Item!.ChangeName(newName);
+                try
+                { 
                     await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
                 }
-            }
-            catch (ArgumentException ex)
-            {
-                _dialogs.ShowError("Failed to update description", ex.Message);
-            }
+                catch (ApiException ex)
+                {
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogs.ShowError("Operace selhala", message);
+                }
+            }          
+            
         }
 
         private async Task ItemDescriptionChanged(ItemViewModel itemViewModel, string? newDescription)
@@ -73,15 +94,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.Description = newDescription;
                 return;
             }
-            try
-            {
-                itemViewModel.Item!.Description = newDescription;
+            
+            itemViewModel.Item!.Description = newDescription;
+            try 
+            { 
                 await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
             }
-            catch (ArgumentException ex)
+            catch (ApiException ex)
             {
-                _dialogs.ShowError("Failed to update description", ex.Message);
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
             }
+            
         }
 
         private async Task ItemPlaceNoteChanged(ItemViewModel itemViewModel, string? newPlaceNote)
@@ -91,14 +115,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.PlacementNote = newPlaceNote;
                 return; 
             }
+            
+            itemViewModel.Item!.PlacementNote = newPlaceNote;
             try
             {
-                itemViewModel.Item!.PlacementNote = newPlaceNote;
                 await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
             }
-            catch (ArgumentException ex)
+            catch (ApiException ex)
             {
-                _dialogs.ShowError("Failed to update description", ex.Message);
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
             }
         }
     }

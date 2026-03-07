@@ -2,17 +2,20 @@
 using CommunityToolkit.Mvvm.Input;
 using HomeInventory.Client;
 using HomeInventory.Client.Auth;
+using HomeInventory.Client.Errors;
+using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using HomeInventory.Desktop.Wpf.Services.Navigation;
 using System.Diagnostics;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class LoginViewModel(INavigationService nav, IAuthService auth, IDialogService dialogs) : ObservableObject 
+    public partial class LoginViewModel(INavigationService nav, IAuthService auth, IDialogService dialogs, IErrorLocalizer errorLocalizer) : ObservableObject 
     {
         private readonly INavigationService _nav = nav;
         private readonly IAuthService _auth = auth;
         private readonly IDialogService _dialogs = dialogs;
+        private readonly IErrorLocalizer _errorLocalizer = errorLocalizer;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -28,18 +31,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var result = await _auth.LoginAsync(UserName, Password);
                 Debug.WriteLine(result);
-            } catch (InvalidCredentialsException)
+            }  catch (ApiException ex)
             {
-                _dialogs.ShowInfo("Přihlášení selhalo", "Špatné jméno nebo heslo.");
-                return;
-            } catch (ApiUnavailableException)
-            {
-                _dialogs.ShowInfo("Přihlášení selhalo", "Server není dostupný. Zkus to prosím později.");
-                return;
-            } catch (Exception ex)
-            {
-                _dialogs.ShowInfo("Přihlášení selhalo", "Neočekáváná chyba: " + ex.Message);
-                return;
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
             }
 
             await _nav.NavigateTo<MainViewModel>();
