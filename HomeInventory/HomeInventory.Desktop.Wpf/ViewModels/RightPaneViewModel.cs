@@ -19,6 +19,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [ObservableProperty]
         private ItemViewModel? selectedItem;
         private bool addingNewItem = false;
+        [ObservableProperty]
+        private bool isBusy = false;
 
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
@@ -31,7 +33,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 var items = await _locations.GetItemsAsync(location.Id, ct);
                 foreach (var item in items)
                 {
-                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
+                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, item));
                 }
             }
             catch (ApiException ex)
@@ -63,7 +65,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    var item = await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    var item = await RunBusy(() => _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
                     itemViewModel.SetItem(item);
                     addingNewItem = false;
                 }
@@ -78,7 +80,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.Item!.ChangeName(newName);
                 try
                 { 
-                    await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
+                    await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
                 }
                 catch (ApiException ex)
                 {
@@ -100,7 +102,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             itemViewModel.Item!.Description = newDescription;
             try 
             { 
-                await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
             }
             catch (ApiException ex)
             {
@@ -121,12 +123,46 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             itemViewModel.Item!.PlacementNote = newPlaceNote;
             try
             {
-                await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
             }
             catch (ApiException ex)
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            }
+        }
+
+        private async Task ItemQuantityChanged(ItemViewModel itemViewModel, int newQuantinty)
+        {
+            if (itemViewModel.IsNew)
+            {
+                itemViewModel.Quantity = newQuantinty;
+                return;
+            }
+
+            itemViewModel.Item!.Quantity = newQuantinty;
+            try
+            {
+                var request = ItemViewModel.GetUpdateRequest(itemViewModel.Item);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, request, new CancellationTokenSource().Token));
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
+            }
+        }
+
+        private async Task<T> RunBusy<T>(Func<Task<T>> action)
+        {
+            if (IsBusy)
+                throw new InvalidOperationException("Operation already in progress");
+            try
+            {
+                IsBusy = true;
+                return await action();
+            } finally {
+                IsBusy = false;
             }
         }
     }

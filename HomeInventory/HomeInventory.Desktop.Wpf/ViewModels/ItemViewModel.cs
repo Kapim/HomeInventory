@@ -18,23 +18,27 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly Func<ItemViewModel, string, Task> _itemNameChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemDescriptionChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemPlacementNoteChanged;
+        private readonly Func<ItemViewModel, int, Task> _itemQuantityChanged;
 
         public bool IsNew => Item == null;
 
         public ItemViewModel(Func<ItemViewModel, string, Task> itemNameChangedCallback,
             Func<ItemViewModel, string?, Task> itemDescriptionChanged,
             Func<ItemViewModel, string?, Task> itemPlacementNoteChanged,
-        Item? item = null)
+            Func<ItemViewModel, int, Task> itemQuantityChanged,
+            Item? item = null)
         {         
             _itemNameChanged = itemNameChangedCallback;
             _itemDescriptionChanged = itemDescriptionChanged;
             _itemPlacementNoteChanged = itemPlacementNoteChanged;
+            _itemQuantityChanged = itemQuantityChanged;
             Item = item;
             if (Item != null)
             {
                 name = Item.Name;
                 placementNote = Item.PlacementNote;
                 description = Item.Description;
+                quantity = Item.Quantity;
             }
         }
 
@@ -55,6 +59,11 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         async partial void OnPlacementNoteChanged(string? value)
         {
             await _itemPlacementNoteChanged(this, value);
+        }
+
+        async partial void OnQuantityChanged(int value)
+        {
+            await _itemQuantityChanged(this, value);
         }
 
         public static ItemUpdateRequest GetUpdateRequest(Item item) =>

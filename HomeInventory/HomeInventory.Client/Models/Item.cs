@@ -8,7 +8,7 @@ namespace HomeInventory.Client.Models
     {
         public Guid Id = id;
         public string Name { get; private set; } = name;
-        public int Quantity { get; } = quantity;
+        public int Quantity { get; set; } = quantity;
         public Guid LocationId { get; } = locationId;
         public Guid OwnerId { get; } = ownerId;
         public string? PlacementNote { get; set; } = placementNote;
