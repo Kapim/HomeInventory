@@ -11,10 +11,10 @@
     <Grid>
         <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" />
-                <DataGridTextColumn Header="Placement Note" Binding="{Binding PlacementNote}" />
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity, UpdateSourceTrigger=LostFocus}"  />
+                <DataGridTextColumn Header="Placement Note" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Description" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" />
             </DataGrid.Columns>
         </DataGrid>      
     </Grid>

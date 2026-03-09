@@ -24,6 +24,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
             Items.Clear();
+            addingNewItem = false;
             _location = location;
             try
             {
@@ -62,7 +63,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    var item = await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    itemViewModel.SetItem(item);
                     addingNewItem = false;
                 }
                 catch (ApiException ex)

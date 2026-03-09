@@ -8,7 +8,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 {
     public partial class ItemViewModel : ObservableObject
     {
-        public readonly Item? Item;
+        public Item? Item { get; private set; }
         [ObservableProperty]
         private string? name;
         [ObservableProperty]
@@ -59,6 +59,11 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public static ItemUpdateRequest GetUpdateRequest(Item item) =>
             new(item.Name, item.Description, item.Quantity, item.PlacementNote, item.LocationId);
+
+        public void SetItem(Item item)
+        {
+            Item = item;
+        }
 
     }
 }
