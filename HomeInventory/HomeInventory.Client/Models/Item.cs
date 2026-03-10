@@ -9,7 +9,7 @@ namespace HomeInventory.Client.Models
         public Guid Id = id;
         public string Name { get; private set; } = name;
         public int Quantity { get; set; } = quantity;
-        public Guid LocationId { get; } = locationId;
+        public Guid LocationId { get; private set; } = locationId;
         public Guid OwnerId { get; } = ownerId;
         public string? PlacementNote { get; set; } = placementNote;
         public string? Description { get; set; } = description;
@@ -19,6 +19,11 @@ namespace HomeInventory.Client.Models
             if (string.IsNullOrWhiteSpace(newName))
                 throw new ArgumentException("Name must be set");
             Name = newName.Trim();
+        }
+
+        public void MoveTo(Guid newLocationId)
+        {
+            LocationId = newLocationId;
         }
     }
 }

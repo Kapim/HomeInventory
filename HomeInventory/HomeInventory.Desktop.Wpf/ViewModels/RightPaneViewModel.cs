@@ -50,14 +50,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 _dialogs.ShowInfo("Failed to add a new item", "Finish a new item first by adding a name");
                 return;
             }
-            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, null);
+            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, null);
             Items.Add(row);
             SelectedItem = row;
             addingNewItem = true;
         }
 
-        private async Task ItemNameChanged(ItemViewModel itemViewModel, string newName)
+        private async Task ItemNameChanged(ItemViewModel itemViewModel, string? newName)
         {
+            if (string.IsNullOrEmpty(newName))
+            {
+                _dialogs.ShowError("Operace selhala", "Jméno musí být vyplněno!");
+                if (itemViewModel.Item != null)
+                    itemViewModel.Name = itemViewModel.Item.Name;
+                return;
+            }
             if (_location is null)
                 throw new NullReferenceException("Location was not loaded!");
            
@@ -65,27 +72,44 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    var item = await RunBusy(() => _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
+                    var item = await RunBusy(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
                     itemViewModel.SetItem(item);
                     addingNewItem = false;
+                    //fast adding of new items
+                    AddNewItem();
+                    return;
                 }
                 catch (ApiException ex)
                 {
                     var message = _errorLocalizer.GetString(ex.Type);
                     _dialogs.ShowError("Operace selhala", message);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _dialogs.ShowError("Operace selhala", ex.Message);
                 }
             }
             else
             {
-                itemViewModel.Item!.ChangeName(newName);
+                try
+                {
+                    itemViewModel.Item!.ChangeName(newName);
+                } catch (ArgumentException ex)
+                {
+                    _dialogs.ShowError("Operace selhala", ex.Message);
+                }
                 try
                 { 
-                    await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
+                    await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
                 }
                 catch (ApiException ex)
                 {
                     var message = _errorLocalizer.GetString(ex.Type);
                     _dialogs.ShowError("Operace selhala", message);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _dialogs.ShowError("Operace selhala", ex.Message);
                 }
             }          
             
@@ -109,7 +133,11 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
             }
-            
+            catch (InvalidOperationException ex)
+            {
+                _dialogs.ShowError("Operace selhala", ex.Message);
+            }
+
         }
 
         private async Task ItemPlaceNoteChanged(ItemViewModel itemViewModel, string? newPlaceNote)
@@ -129,6 +157,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
 
@@ -150,6 +182,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            } catch (InvalidOperationException ex)
+            {
+                _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
 

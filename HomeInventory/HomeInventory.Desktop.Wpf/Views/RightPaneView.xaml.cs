@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using HomeInventory.Desktop.Wpf.ViewModels;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
@@ -54,8 +55,15 @@ namespace HomeInventory.Desktop.Wpf.Views
 
         private void Grid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            Console.WriteLine(sender);
             if (sender is not DataGrid grid) return;
             if (grid.SelectedItem is null) return;
+
+            if (grid.DataContext is RightPaneViewModel vm)
+                // only begin edit of new item
+                if (vm.SelectedItem == null || !vm.SelectedItem.IsNew)
+                    return;
+            
 
             grid.Dispatcher.BeginInvoke(() =>
             {

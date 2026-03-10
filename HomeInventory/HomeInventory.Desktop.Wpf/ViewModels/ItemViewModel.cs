@@ -15,14 +15,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private string? placementNote, description;
         [ObservableProperty]
         private int quantity;
-        private readonly Func<ItemViewModel, string, Task> _itemNameChanged;
+        private readonly Func<ItemViewModel, string?, Task> _itemNameChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemDescriptionChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemPlacementNoteChanged;
         private readonly Func<ItemViewModel, int, Task> _itemQuantityChanged;
 
         public bool IsNew => Item == null;
 
-        public ItemViewModel(Func<ItemViewModel, string, Task> itemNameChangedCallback,
+        public ItemViewModel(Func<ItemViewModel, string?, Task> itemNameChangedCallback,
             Func<ItemViewModel, string?, Task> itemDescriptionChanged,
             Func<ItemViewModel, string?, Task> itemPlacementNoteChanged,
             Func<ItemViewModel, int, Task> itemQuantityChanged,
@@ -44,8 +44,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         async partial void OnNameChanged(string? value)
         {
-            if (value is null)
-                throw new ArgumentNullException(nameof(value));
             await _itemNameChanged(this, value);          
 
         }
