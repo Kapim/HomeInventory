@@ -44,14 +44,12 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         async partial void OnNameChanged(string? value)
         {
-            await _itemNameChanged(this, value);          
-
+            await _itemNameChanged(this, value);        
         }
 
         async partial void OnDescriptionChanged(string? value)
         {
-            await _itemDescriptionChanged(this, value);
-            
+            await _itemDescriptionChanged(this, value);            
         }
 
         async partial void OnPlacementNoteChanged(string? value)
@@ -70,6 +68,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public void SetItem(Item item)
         {
             Item = item;
+            Name = item.Name;
+            PlacementNote = item.PlacementNote;
+            Quantity = item.Quantity;
+            Description = item.Description;
         }
 
     }

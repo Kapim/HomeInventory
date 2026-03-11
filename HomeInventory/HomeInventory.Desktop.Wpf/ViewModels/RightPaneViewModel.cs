@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HomeInventory.Client.Errors;
+using HomeInventory.Client.Models;
+using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
@@ -85,7 +87,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                     _dialogs.ShowError("Operace selhala", message);
                 }
                 catch (InvalidOperationException ex)
-                {
+                {                    
                     _dialogs.ShowError("Operace selhala", ex.Message);
                 }
             }
@@ -93,14 +95,11 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    itemViewModel.Item!.ChangeName(newName);
-                } catch (ArgumentException ex)
-                {
-                    _dialogs.ShowError("Operace selhala", ex.Message);
-                }
-                try
-                { 
-                    await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
+                    var item = itemViewModel.Item!;
+                    var request = new ItemUpdateRequest(newName, item.Name, item.Quantity, item.PlacementNote, item.LocationId);                   
+                    
+                    var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                    itemViewModel.SetItem(updatedItem);                    
                 }
                 catch (ApiException ex)
                 {
@@ -135,6 +134,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             catch (InvalidOperationException ex)
             {
+                itemViewModel.Description = itemViewModel.Item!.Description;
                 _dialogs.ShowError("Operace selhala", ex.Message);
             }
 
@@ -160,6 +160,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             catch (InvalidOperationException ex)
             {
+                itemViewModel.PlacementNote = itemViewModel.Item!.PlacementNote;
                 _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
@@ -184,6 +185,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 _dialogs.ShowError("Operace selhala", message);
             } catch (InvalidOperationException ex)
             {
+                itemViewModel.Quantity = itemViewModel.Item!.Quantity;
                 _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
