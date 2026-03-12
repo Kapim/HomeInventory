@@ -22,6 +22,13 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public bool IsNew => Item == null;
 
+        private bool _suprressNextOnChange = false;
+
+        public void SupressNextOnChange()
+        {
+            _suprressNextOnChange = true;
+        }
+
         public ItemViewModel(Func<ItemViewModel, string?, Task> itemNameChangedCallback,
             Func<ItemViewModel, string?, Task> itemDescriptionChanged,
             Func<ItemViewModel, string?, Task> itemPlacementNoteChanged,
@@ -44,21 +51,41 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         async partial void OnNameChanged(string? value)
         {
+            if (_suprressNextOnChange)
+            {
+                _suprressNextOnChange = false;
+                return;
+            }
             await _itemNameChanged(this, value);        
         }
 
         async partial void OnDescriptionChanged(string? value)
         {
+            if (_suprressNextOnChange)
+            {
+                _suprressNextOnChange = false;
+                return;
+            }
             await _itemDescriptionChanged(this, value);            
         }
 
         async partial void OnPlacementNoteChanged(string? value)
         {
+            if (_suprressNextOnChange)
+            {
+                _suprressNextOnChange = false;
+                return;
+            }
             await _itemPlacementNoteChanged(this, value);
         }
 
         async partial void OnQuantityChanged(int value)
         {
+            if (_suprressNextOnChange)
+            {
+                _suprressNextOnChange = false;
+                return;
+            }
             await _itemQuantityChanged(this, value);
         }
 

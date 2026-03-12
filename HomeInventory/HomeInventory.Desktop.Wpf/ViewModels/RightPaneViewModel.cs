@@ -93,22 +93,23 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             else
             {
+                var item = itemViewModel.Item!;
+
                 try
                 {
-                    var item = itemViewModel.Item!;
-                    var request = new ItemUpdateRequest(newName, item.Name, item.Quantity, item.PlacementNote, item.LocationId);                   
+                    var request = new ItemUpdateRequest(newName, item.Description, item.Quantity, item.PlacementNote, item.LocationId);                   
                     
                     var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
                     itemViewModel.SetItem(updatedItem);                    
                 }
-                catch (ApiException ex)
+                catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
                 {
-                    var message = _errorLocalizer.GetString(ex.Type);
+                    itemViewModel.SupressNextOnChange();
+                    itemViewModel.Name = item.Name;
+                    string message = ex.Message;
+                    if (ex is ApiException apiEx)
+                        message = _errorLocalizer.GetString(apiEx.Type);
                     _dialogs.ShowError("Operace selhala", message);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    _dialogs.ShowError("Operace selhala", ex.Message);
                 }
             }          
             
@@ -121,21 +122,22 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.Description = newDescription;
                 return;
             }
-            
-            itemViewModel.Item!.Description = newDescription;
+
+            var item = itemViewModel.Item!;
             try 
-            { 
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
-            }
-            catch (ApiException ex)
             {
-                var message = _errorLocalizer.GetString(ex.Type);
+                var request = new ItemUpdateRequest(item.Name, newDescription, item.Quantity, item.PlacementNote, item.LocationId);
+
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+            }
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
+            {
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.Description = item.Description;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
                 _dialogs.ShowError("Operace selhala", message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                itemViewModel.Description = itemViewModel.Item!.Description;
-                _dialogs.ShowError("Operace selhala", ex.Message);
             }
 
         }
@@ -147,21 +149,22 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.PlacementNote = newPlaceNote;
                 return; 
             }
-            
-            itemViewModel.Item!.PlacementNote = newPlaceNote;
+
+            var item = itemViewModel.Item!;
             try
             {
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token));
+
+                var request = new ItemUpdateRequest(item.Name, item.Description, item.Quantity, newPlaceNote, item.LocationId);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
             }
-            catch (ApiException ex)
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
-                var message = _errorLocalizer.GetString(ex.Type);
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.PlacementNote = item.PlacementNote;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
                 _dialogs.ShowError("Operace selhala", message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                itemViewModel.PlacementNote = itemViewModel.Item!.PlacementNote;
-                _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
 
@@ -172,21 +175,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.Quantity = newQuantinty;
                 return;
             }
-
-            itemViewModel.Item!.Quantity = newQuantinty;
+            var item = itemViewModel.Item!;
             try
             {
-                var request = ItemViewModel.GetUpdateRequest(itemViewModel.Item);
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item.Id, request, new CancellationTokenSource().Token));
+                var originalValue = item.Quantity;
+                var request = new ItemUpdateRequest(item.Name, item.Description, newQuantinty, item.PlacementNote, item.LocationId);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
             }
-            catch (ApiException ex)
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
-                var message = _errorLocalizer.GetString(ex.Type);
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.Quantity = item.Quantity;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
                 _dialogs.ShowError("Operace selhala", message);
-            } catch (InvalidOperationException ex)
-            {
-                itemViewModel.Quantity = itemViewModel.Item!.Quantity;
-                _dialogs.ShowError("Operace selhala", ex.Message);
             }
         }
 
