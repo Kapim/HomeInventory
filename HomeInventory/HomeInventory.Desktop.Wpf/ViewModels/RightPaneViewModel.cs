@@ -6,6 +6,7 @@ using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
+using MaterialDesignThemes.Wpf;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
@@ -24,6 +25,12 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [ObservableProperty]
         private bool isBusy = false;
 
+        public ISnackbarMessageQueue SnackbarMessageQueue { get; } = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
+
+        public void ShowSaved()
+        {
+            SnackbarMessageQueue.Enqueue("Uloženo");
+        }
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
@@ -76,6 +83,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 {
                     var item = await RunBusy(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
                     itemViewModel.SetItem(item);
+                    ShowSaved();
                     addingNewItem = false;
                     //fast adding of new items
                     AddNewItem();
@@ -100,7 +108,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                     var request = new ItemUpdateRequest(newName, item.Description, item.Quantity, item.PlacementNote, item.LocationId);                   
                     
                     var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
-                    itemViewModel.SetItem(updatedItem);                    
+                    itemViewModel.SetItem(updatedItem);
+                    ShowSaved();
                 }
                 catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
                 {
@@ -128,7 +137,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var request = new ItemUpdateRequest(item.Name, newDescription, item.Quantity, item.PlacementNote, item.LocationId);
 
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                itemViewModel.SetItem(updatedItem);
+                ShowSaved();
             }
             catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
@@ -155,7 +166,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
 
                 var request = new ItemUpdateRequest(item.Name, item.Description, item.Quantity, newPlaceNote, item.LocationId);
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                itemViewModel.SetItem(updatedItem);
+                ShowSaved();
             }
             catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
@@ -180,7 +193,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var originalValue = item.Quantity;
                 var request = new ItemUpdateRequest(item.Name, item.Description, newQuantinty, item.PlacementNote, item.LocationId);
-                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                itemViewModel.SetItem(updatedItem);
+                ShowSaved();
             }
             catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
