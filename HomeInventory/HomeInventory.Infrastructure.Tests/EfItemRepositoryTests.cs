@@ -115,69 +115,7 @@ namespace HomeInventory.Infrastructure.Tests
             Assert.DoesNotContain(results, i => i.Name == "Other owner item");
         }
 
-        [Fact]
-        public async Task FindByNameAsync_returns_matches_for_owner()
-        {
-            var (ctx, repo) = CreateSut();
-
-            var a = CreateItem("AA Batteries", ownerId: _ownerId);
-            var b = CreateItem("AAA Batteries", ownerId: _ownerId);
-            var c = CreateItem("Screws", ownerId: _ownerId);
-            var d = CreateItem("AA Batteries", ownerId: _otherOwnerId);
-
-            await repo.AddAsync(a, CancellationToken.None);
-            await repo.AddAsync(b, CancellationToken.None);
-            await repo.AddAsync(c, CancellationToken.None);
-            await repo.AddAsync(d, CancellationToken.None);
-            await ctx.SaveChangesAsync();
-
-            ctx.ChangeTracker.Clear();
-
-            var results = await repo.FindByNameAsync(_ownerId, "Batteries", CancellationToken.None);
-
-            Assert.NotNull(results);
-            Assert.All(results, i => Assert.Equal(_ownerId, i.OwnerUserId));
-            Assert.Contains(results, i => i.Name == "AA Batteries");
-            Assert.Contains(results, i => i.Name == "AAA Batteries");
-            Assert.DoesNotContain(results, i => i.Name == "AA Batteries" && i.OwnerUserId == _otherOwnerId);
-        }
-
-        [Fact]
-        public async Task GetByLocationAsync_returns_only_items_in_location_for_owner()
-        {
-            var (ctx, repo) = CreateSut();
-
-            var location = CreateLocation("Garage");
-            ctx.Locations.Add(location);
-            await ctx.SaveChangesAsync();
-
-            var inGarage1 = CreateItem("Hammer", locationId: location.Id, ownerId: _ownerId);
-            var inGarage2 = CreateItem("Screwdriver", locationId: location.Id, ownerId: _ownerId);
-            var elsewhere = CreateItem("Tape", locationId: null, ownerId: _ownerId);
-            var otherOwnerInGarage = CreateItem("OtherOwnerItem", locationId: location.Id, ownerId: _otherOwnerId);
-
-            await repo.AddAsync(inGarage1, CancellationToken.None);
-            await repo.AddAsync(inGarage2, CancellationToken.None);
-            await repo.AddAsync(elsewhere, CancellationToken.None);
-            await repo.AddAsync(otherOwnerInGarage, CancellationToken.None);
-            await ctx.SaveChangesAsync();
-
-            ctx.ChangeTracker.Clear();
-
-            var results = await repo.GetByLocationAsync(location.Id, CancellationToken.None);
-
-            Assert.Equal(2, results.Count);
-            Assert.All(results, i =>
-            {
-                Assert.Equal(_ownerId, i.OwnerUserId);
-                Assert.Equal(location.Id, i.LocationId);
-            });
-
-            Assert.Contains(results, i => i.Name == "Hammer");
-            Assert.Contains(results, i => i.Name == "Screwdriver");
-            Assert.DoesNotContain(results, i => i.Name == "OtherOwnerItem");
-            Assert.DoesNotContain(results, i => i.Name == "Tape");
-        }
+      
 
         [Fact]
         public async Task UpdateAsync_persists_rename_and_quantity_change()

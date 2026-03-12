@@ -8,14 +8,25 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800"
              >
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
     <Grid>
-        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded">
+        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded" IsReadOnly="{Binding IsBusy}" >
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity}" />
-                <DataGridTextColumn Header="Placement Note" Binding="{Binding PlacementNote}" />
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity, UpdateSourceTrigger=LostFocus}"  />
+                <DataGridTextColumn Header="Placement Note" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn Header="Description" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" />
             </DataGrid.Columns>
-        </DataGrid>      
+        </DataGrid>
+        <Border Background="#66FFFFFF"
+                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"
+                Panel.ZIndex="10">  
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar Width="140" Height="6" IsIndeterminate="True"/>
+                <TextBlock Text="Ukládám..." Margin="0,8,0,0" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

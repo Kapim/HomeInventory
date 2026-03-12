@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HomeInventory.Client.Errors;
+using HomeInventory.Client.Models;
+using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
@@ -19,18 +21,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [ObservableProperty]
         private ItemViewModel? selectedItem;
         private bool addingNewItem = false;
+        [ObservableProperty]
+        private bool isBusy = false;
 
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
             Items.Clear();
+            addingNewItem = false;
             _location = location;
             try
             {
                 var items = await _locations.GetItemsAsync(location.Id, ct);
                 foreach (var item in items)
                 {
-                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, item));
+                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, item));
                 }
             }
             catch (ApiException ex)
@@ -47,14 +52,21 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 _dialogs.ShowInfo("Failed to add a new item", "Finish a new item first by adding a name");
                 return;
             }
-            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, null);
+            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, null);
             Items.Add(row);
             SelectedItem = row;
             addingNewItem = true;
         }
 
-        private async Task ItemNameChanged(ItemViewModel itemViewModel, string newName)
+        private async Task ItemNameChanged(ItemViewModel itemViewModel, string? newName)
         {
+            if (string.IsNullOrEmpty(newName))
+            {
+                _dialogs.ShowError("Operace selhala", "Jméno musí být vyplněno!");
+                if (itemViewModel.Item != null)
+                    itemViewModel.Name = itemViewModel.Item.Name;
+                return;
+            }
             if (_location is null)
                 throw new NullReferenceException("Location was not loaded!");
            
@@ -62,25 +74,41 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    await _items.CreateAsync(new(newName, 0, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token);
+                    var item = await RunBusy(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
+                    itemViewModel.SetItem(item);
                     addingNewItem = false;
+                    //fast adding of new items
+                    AddNewItem();
+                    return;
                 }
                 catch (ApiException ex)
                 {
                     var message = _errorLocalizer.GetString(ex.Type);
                     _dialogs.ShowError("Operace selhala", message);
                 }
+                catch (InvalidOperationException ex)
+                {                    
+                    _dialogs.ShowError("Operace selhala", ex.Message);
+                }
             }
             else
             {
-                itemViewModel.Item!.ChangeName(newName);
+                var item = itemViewModel.Item!;
+
                 try
-                { 
-                    await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
-                }
-                catch (ApiException ex)
                 {
-                    var message = _errorLocalizer.GetString(ex.Type);
+                    var request = new ItemUpdateRequest(newName, item.Description, item.Quantity, item.PlacementNote, item.LocationId);                   
+                    
+                    var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                    itemViewModel.SetItem(updatedItem);                    
+                }
+                catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
+                {
+                    itemViewModel.SupressNextOnChange();
+                    itemViewModel.Name = item.Name;
+                    string message = ex.Message;
+                    if (ex is ApiException apiEx)
+                        message = _errorLocalizer.GetString(apiEx.Type);
                     _dialogs.ShowError("Operace selhala", message);
                 }
             }          
@@ -94,18 +122,24 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.Description = newDescription;
                 return;
             }
-            
-            itemViewModel.Item!.Description = newDescription;
+
+            var item = itemViewModel.Item!;
             try 
-            { 
-                await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
-            }
-            catch (ApiException ex)
             {
-                var message = _errorLocalizer.GetString(ex.Type);
+                var request = new ItemUpdateRequest(item.Name, newDescription, item.Quantity, item.PlacementNote, item.LocationId);
+
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+            }
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
+            {
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.Description = item.Description;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
                 _dialogs.ShowError("Operace selhala", message);
             }
-            
+
         }
 
         private async Task ItemPlaceNoteChanged(ItemViewModel itemViewModel, string? newPlaceNote)
@@ -115,16 +149,60 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 itemViewModel.PlacementNote = newPlaceNote;
                 return; 
             }
-            
-            itemViewModel.Item!.PlacementNote = newPlaceNote;
+
+            var item = itemViewModel.Item!;
             try
             {
-                await _items.UpdateAsync(itemViewModel.Item.Id, ItemViewModel.GetUpdateRequest(itemViewModel.Item), new CancellationTokenSource().Token);
+
+                var request = new ItemUpdateRequest(item.Name, item.Description, item.Quantity, newPlaceNote, item.LocationId);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
             }
-            catch (ApiException ex)
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
             {
-                var message = _errorLocalizer.GetString(ex.Type);
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.PlacementNote = item.PlacementNote;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            }
+        }
+
+        private async Task ItemQuantityChanged(ItemViewModel itemViewModel, int newQuantinty)
+        {
+            if (itemViewModel.IsNew)
+            {
+                itemViewModel.Quantity = newQuantinty;
+                return;
+            }
+            var item = itemViewModel.Item!;
+            try
+            {
+                var originalValue = item.Quantity;
+                var request = new ItemUpdateRequest(item.Name, item.Description, newQuantinty, item.PlacementNote, item.LocationId);
+                await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+            }
+            catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
+            {
+                itemViewModel.SupressNextOnChange();
+                itemViewModel.Quantity = item.Quantity;
+                string message = ex.Message;
+                if (ex is ApiException apiEx)
+                    message = _errorLocalizer.GetString(apiEx.Type);
+                _dialogs.ShowError("Operace selhala", message);
+            }
+        }
+
+        private async Task<T> RunBusy<T>(Func<Task<T>> action)
+        {
+            if (IsBusy)
+                throw new InvalidOperationException("Operation already in progress");
+            try
+            {
+                IsBusy = true;
+                return await action();
+            } finally {
+                IsBusy = false;
             }
         }
     }

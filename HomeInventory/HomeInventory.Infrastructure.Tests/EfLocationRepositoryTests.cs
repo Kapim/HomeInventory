@@ -1,6 +1,5 @@
 ﻿using HomeInventory.Domain;
 using HomeInventory.Domain.Enums;
-using HomeInventory.Domain.Requests;
 using HomeInventory.Infrastructure.Persistence;
 using HomeInventory.Infrastructure.Repositories;
 using Xunit;
