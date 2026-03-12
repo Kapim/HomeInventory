@@ -10,6 +10,16 @@ namespace HomeInventory.Desktop.Wpf.Tests
 {
     public class RightPaneViewModelTests
     {
+        private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 1500, int pollMs = 20)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            while (sw.ElapsedMilliseconds < timeoutMs)
+            {
+                if (condition()) return;
+                await Task.Delay(pollMs);
+            }
+            throw new TimeoutException("Expected state was not reached in time.");
+        }
         [Fact]
         public async Task CreateNewItem_AddsNewItemAndBindsId()
         {
@@ -21,6 +31,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
             Assert.True(item.IsNew);
             Assert.Null(item.Item);
             item.Name = "NewName";
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Name == "NewName");
             Assert.NotNull(item.Item);
             Assert.False(item.IsNew);
             Assert.False(vm.IsBusy);
@@ -34,7 +45,9 @@ namespace HomeInventory.Desktop.Wpf.Tests
             vm.AddNewItem();
             var item = vm.Items[0];
             item.Name = "NewName";
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Name == "NewName");
             item.Name = "NewName2";
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Name == "NewName2");
             Assert.Equal("NewName2", item.Item!.Name);
         }
 
@@ -51,6 +64,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
             item.PlacementNote = "place";
             item.Quantity = 10;
             item.Name = name;
+            await WaitUntilAsync(() => mockDialogService.Messages.Count != 0);
             Assert.True(item.IsNew);
             Assert.Null(item.Item);
             Assert.Equal("desc", item.Description);
@@ -79,6 +93,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
             item.PlacementNote = newPlacementNote;
             item.Description = newDescription;
             item.Quantity = newQuantity;
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Quantity == newQuantity);
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Name == newName);
+            await WaitUntilAsync(() => item.Item is not null && item.Item.PlacementNote == newPlacementNote);
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Description == newDescription);
             Assert.Equal(newName, item.Item!.Name);
             Assert.Equal(newPlacementNote, item.Item!.PlacementNote);
             Assert.Equal(newDescription, item.Item!.Description);
@@ -106,6 +124,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
             item.Quantity = newQuantity;
             Assert.Null(item.Item);
             item.Name = "NewName";
+
+            await WaitUntilAsync(() => item.Item is not null && item.Item.Name == "NewName");
             Assert.Equal(newName, item.Item!.Name);
             Assert.Equal(newPlacementNote, item.Item!.PlacementNote);
             Assert.Equal(newDescription, item.Item!.Description);
@@ -124,6 +144,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
             var item = vm.Items[0];
             vm.IsBusy = true;
             item.Name = "NewName";
+            await WaitUntilAsync(() => mockDialogService.Messages.Count != 0);
             Assert.Equal("name", item.Item!.Name);
             Assert.Single(mockDialogService.Messages);
         }
