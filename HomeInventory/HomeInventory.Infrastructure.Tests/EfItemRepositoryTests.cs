@@ -29,12 +29,8 @@ namespace HomeInventory.Infrastructure.Tests
 
         private Item CreateItem(string name, Guid? locationId = null, Guid? ownerId = null, int quantity = 1)
         {
-            var item = new Item(name, ownerId ?? _ownerId, locationId ?? _locationId)
-            {
-                Quantity = quantity
-            };
-
-
+            var item = new Item(name, ownerId ?? _ownerId, locationId ?? _locationId);
+            item.SetQuantity(quantity);
             return item;
         }
 
@@ -127,7 +123,7 @@ namespace HomeInventory.Infrastructure.Tests
             await ctx.SaveChangesAsync();
 
             item.Rename("New name");
-            item.Quantity = 42;
+            item.SetQuantity(42);
 
             await repo.UpdateAsync(item, CancellationToken.None);
             await ctx.SaveChangesAsync();

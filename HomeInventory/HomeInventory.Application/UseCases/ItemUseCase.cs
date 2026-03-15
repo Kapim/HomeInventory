@@ -15,17 +15,30 @@ namespace HomeInventory.Application.UseCases
 
         public async Task<Item> AddItemAsync(ItemCreateRequest request, Guid ownerId, CancellationToken ct)
         {
-            Item item = new(request.Name, ownerId, request.LocationId);
-            item.Quantity = request.Quantity;
-            item.PlacementNote = request.PlacementNote;
-            item.Description = request.Description;
-            await _items.AddAsync(item, ct);
-            return item;
+            try
+            {
+                Item item = new(request.Name, ownerId, request.LocationId);
+                item.SetPlacementNote(request.PlacementNote);
+                item.SetDescription(request.Description);
+                item.SetQuantity(request.Quantity);
+                await _items.AddAsync(item, ct);
+                return item;
+            } catch (Exception ex) when (ex is ArgumentOutOfRangeException || ex is ArgumentException)
+            {
+                throw;
+            }
+            
         }
 
         public async Task DeleteItemAsync(Guid id, CancellationToken ct)
         {
-            await _items.DeleteAsync(id, ct);
+            try
+            {
+                await _items.DeleteAsync(id, ct);
+            } catch (KeyNotFoundException)
+            {
+                throw;
+            }
         }      
 
         public async Task<Item?> GetItemAsync(Guid itemId, CancellationToken ct)
@@ -42,14 +55,20 @@ namespace HomeInventory.Application.UseCases
         {
             var item = await _items.GetByIdAsync(id, ct);
             if (item != null)
-            { 
-                item.Rename(request.Name);
-                item.Description = request.Description;
-                item.Quantity = request.Quantinty;
-                item.PlacementNote = request.PlacementNote;
-                item.MoveToLocation(request.LocationId);
-                return await _items.UpdateAsync(item, ct);
-            } else
+            {
+                try
+                {
+                    item.Rename(request.Name);
+                    item.SetDescription(request.Description);
+                    item.SetQuantity(request.Quantinty);
+                    item.SetPlacementNote(request.PlacementNote);
+                    item.MoveToLocation(request.LocationId);
+                    return await _items.UpdateAsync(item, ct);
+                } catch (Exception ex) when(ex is ArgumentOutOfRangeException || ex is ArgumentException)
+                {
+                    throw;
+                }
+        } else
             {
                 throw new KeyNotFoundException(nameof(id));
             }

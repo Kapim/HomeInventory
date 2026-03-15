@@ -11,14 +11,24 @@
              >
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <Style x:Key="NameTemplate" TargetType="{x:Type TextBox}">
+            <Setter Property="MaxLength" Value="20" />
+        </Style>
+        <Style x:Key="DescPlaceNoteTemplate" TargetType="{x:Type TextBox}">
+            <Setter Property="MaxLength" Value="100" />
+        </Style>
+        <Style x:Key="QuantityTemplate" TargetType="{x:Type TextBox}">
+            <Setter Property="MaxLength" Value="100" />
+        </Style>
     </UserControl.Resources>
     <Grid>
+       
         <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded" IsReadOnly="{Binding IsBusy}" >
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="Quantity" Binding="{Binding Quantity, UpdateSourceTrigger=LostFocus}"  />
-                <DataGridTextColumn Header="Placement Note" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn Header="Description" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn EditingElementStyle="{StaticResource NameTemplate}" Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn EditingElementStyle="{StaticResource QuantityTemplate}" Header="Quantity" Binding="{Binding Quantity, UpdateSourceTrigger=LostFocus}"  />
+                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Placement Note" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Description" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" />
             </DataGrid.Columns>
         </DataGrid>
         <Border Background="#66FFFFFF"
