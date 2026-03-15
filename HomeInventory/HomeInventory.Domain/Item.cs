@@ -37,15 +37,15 @@ namespace HomeInventory.Domain
         public void SetDescription(string? description)
         {
             if (!string.IsNullOrWhiteSpace(description))
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(100, description.Length, nameof(description));
-            Description = description;
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(description.Length, 100, nameof(description));
+            Description = description?.Trim();
         }
 
         public void SetPlacementNote(string? placementNote)
         {
             if (!string.IsNullOrWhiteSpace(placementNote))
-                ArgumentOutOfRangeException.ThrowIfGreaterThan(100, placementNote.Length, nameof(placementNote));
-            PlacementNote = placementNote;
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(placementNote.Length, 100, nameof(placementNote));
+            PlacementNote = placementNote?.Trim();
         }
         public Guid Id { get; private set; } = Guid.NewGuid();
         public string Name => _name;

@@ -79,7 +79,52 @@ namespace HomeInventory.Domain.Tests
         
             Assert.Equal(locationId, item.LocationId);
         }
-        
-       
+
+        [Theory]
+        [InlineData("Description")]
+        [InlineData("    Description")]
+        [InlineData("Description     ")]
+        [InlineData("    Description    ")]
+        public void Description_TrimsInputAndSetValue(string? input)
+        {
+            var item = new Item("name", _ownerId, _locationId);
+            item.SetDescription(input);
+            Assert.Equal("Description", item.Description);
+        }
+
+        [Fact]
+        public void SetDescription_LongerThan100_ThrowsArgumentOutOfRangeException()
+        {
+            var item = new Item("name", _ownerId, _locationId);
+            Assert.Throws<ArgumentOutOfRangeException>(() => item.SetDescription(new('x', 101)));
+        }
+
+
+        [Fact]
+        public void SetPlacementNote_LongerThan100_ThrowsArgumentOutOfRangeException()
+        {
+            var item = new Item("name", _ownerId, _locationId);
+            Assert.Throws<ArgumentOutOfRangeException>(() => item.SetPlacementNote(new('x', 101)));
+        }
+
+        [Theory]
+        [InlineData("PlacementNote")]
+        [InlineData("    PlacementNote")]
+        [InlineData("PlacementNote     ")]
+        [InlineData("    PlacementNote    ")]
+        public void SetPlacementNote_TrimsInputAndSetValue(string? input)
+        {
+            var item = new Item("name", _ownerId, _locationId);
+            item.SetPlacementNote(input);
+            Assert.Equal("PlacementNote", item.PlacementNote);
+        }
+
+        [Fact]
+        public void Rename_LongerThan20_ThrowsArgumentOutOfRangeException()
+        {
+            var item = new Item("name", _ownerId, _locationId);
+            Assert.Throws<ArgumentOutOfRangeException>(() => item.Rename(new('x', 21)));
+        }
+
     }
 }
