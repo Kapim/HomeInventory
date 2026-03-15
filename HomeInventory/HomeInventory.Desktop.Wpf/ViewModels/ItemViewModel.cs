@@ -39,6 +39,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             _itemDescriptionChanged = itemDescriptionChanged;
             _itemPlacementNoteChanged = itemPlacementNoteChanged;
             _itemQuantityChanged = itemQuantityChanged;
+            Quantity = 1;
             Item = item;
             if (Item != null)
             {

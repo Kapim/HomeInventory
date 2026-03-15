@@ -3,6 +3,7 @@ using HomeInventory.Application.Models;
 using HomeInventory.Application.UseCases;
 using HomeInventory.Contracts;
 using HomeInventory.Contracts.Requests;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections;
 using System.Security.Authentication;
@@ -25,9 +26,22 @@ namespace HomeInventory.Api.Controllers
                 return NotFound();
             } else
             {
-                return ItemMapping.Map(item!);
+                return Ok(ItemMapping.Map(item!));
             }
 
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteItem(Guid id)
+        {
+            try
+            {
+                await _items.DeleteItemAsync(id, new CancellationTokenSource().Token);
+                return Ok();
+            } catch (KeyNotFoundException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
@@ -36,13 +50,27 @@ namespace HomeInventory.Api.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim is null)
                 return Unauthorized();
-            return ItemMapping.Map(await _items.AddItemAsync(ItemMapping.Map(createItemRequestDto), Guid.Parse(userIdClaim), new CancellationTokenSource().Token));
+            try
+            {
+                return ItemMapping.Map(await _items.AddItemAsync(ItemMapping.Map(createItemRequestDto), Guid.Parse(userIdClaim), new CancellationTokenSource().Token));
+            }
+            catch (Exception ex) when (ex is ArgumentOutOfRangeException || ex is ArgumentException)
+            {
+                return BadRequest(((ArgumentException)ex).ParamName);
+            }
         }
 
         [HttpPatch("{id}")]
-        public async Task<ItemDto> UpdateItem(Guid id, UpdateItemRequestDto requestDto)
+        public async Task<ActionResult<ItemDto>> UpdateItem(Guid id, UpdateItemRequestDto requestDto)
         {
-            return ItemMapping.Map(await _items.UpdateItemAsync(id, ItemMapping.Map(requestDto), new CancellationTokenSource().Token));
+            try
+            {
+                return Ok(ItemMapping.Map(await _items.UpdateItemAsync(id, ItemMapping.Map(requestDto), new CancellationTokenSource().Token)));
+            }
+            catch (Exception ex) when (ex is ArgumentOutOfRangeException || ex is ArgumentException)
+            {
+                return BadRequest(((ArgumentException)ex).ParamName);
+            }
         }
 
         

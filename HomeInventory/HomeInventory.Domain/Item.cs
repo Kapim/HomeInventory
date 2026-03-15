@@ -13,6 +13,7 @@ namespace HomeInventory.Domain
             OwnerUserId = ownerUserId;
             LocationId = locationId;
             NormalizedName = Name.ToLowerInvariant();
+            Quantity = 1;
         }
 
         public void Rename(string name)
@@ -20,17 +21,40 @@ namespace HomeInventory.Domain
             if (string.IsNullOrWhiteSpace(name))
             {
                 throw new ArgumentException("Name must be set");
+            } else if (name.Length > 20)
+            {
+                throw new ArgumentOutOfRangeException(nameof(name), "Name must not be longer than 20 characters");
             }
             _name = name.Trim();
+        }
+
+        public void SetQuantity(int quantity)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(quantity);
+            Quantity = quantity;
+        }
+
+        public void SetDescription(string? description)
+        {
+            if (!string.IsNullOrWhiteSpace(description))
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(description.Length, 100, nameof(description));
+            Description = description?.Trim();
+        }
+
+        public void SetPlacementNote(string? placementNote)
+        {
+            if (!string.IsNullOrWhiteSpace(placementNote))
+                ArgumentOutOfRangeException.ThrowIfGreaterThan(placementNote.Length, 100, nameof(placementNote));
+            PlacementNote = placementNote?.Trim();
         }
         public Guid Id { get; private set; } = Guid.NewGuid();
         public string Name => _name;
         private string _name = null!;
-        public int Quantity;
+        public int Quantity { get; private set; }
         public Guid LocationId { get; private set; }
         public Guid OwnerUserId { get; private set; }
-        public string? PlacementNote;
-        public string? Description;
+        public string? PlacementNote { get; private set; }
+        public string? Description { get; private set; }
         public string NormalizedName { get; private set; }
 
         public void MoveToLocation(Guid newLocationId)

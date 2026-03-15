@@ -21,7 +21,9 @@
     <Project Path="HomeInventory.Client.Tests/HomeInventory.Client.Tests.csproj">
       <Build Solution="Debug|*" Project="false" />
     </Project>
-    <Project Path="HomeInventory.Desktop.Wpf.Tests/HomeInventory.Desktop.Wpf.Tests.csproj" Id="09d984c8-2aa0-4e28-8ead-a5d3e4fd75d3" />
+    <Project Path="HomeInventory.Desktop.Wpf.Tests/HomeInventory.Desktop.Wpf.Tests.csproj" Id="09d984c8-2aa0-4e28-8ead-a5d3e4fd75d3">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
     <Project Path="HomeInventory.Domain.Tests/HomeInventory.Domain.Tests.csproj" Id="e05c359d-55bf-4e1e-af02-e477ae336329" />
     <Project Path="HomeInventory.Infrastructure.Tests/HomeInventory.Infrastructure.Tests.csproj" Id="e89389bb-c136-42d6-95b9-162bf003abbc" />
   </Folder>
