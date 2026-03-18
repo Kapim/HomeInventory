@@ -41,7 +41,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             _dialogService = dialogService;
 
             TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
-            TopBar.AddItemEvent += TopBar_AddItemEvent;
             TopBar.AddLocationEvent += TopBar_AddLocationEvent;
             LocationTree.OnSelectedLocationChangedEvent += SetActiveLocationAsync;
 
@@ -50,11 +49,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private void TopBar_AddLocationEvent(object? sender, EventArgs e)
         {
             LocationTree.AddLocation();
-        }
-
-        private void TopBar_AddItemEvent(object? sender, EventArgs e)
-        {
-            RightPane.AddNewItem();
         }
 
         private async void SetActiveLocationAsync(object? sender, LocationNodeViewModel? location)

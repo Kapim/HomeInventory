@@ -267,7 +267,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 message += "item?";
             else
                 message += "items?";
-            if (_dialogs.ShowConfirmationDialog("Delte items", message))
+            if (_dialogs.ShowConfirmationDialog("Delete items", message))
             {
                 IsBusy = true;
                 try
@@ -277,7 +277,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                         tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
                     await Task.WhenAll(tasks);
 
-                    SnackbarMessageQueue.Enqueue($"Sucessfully deleted {itemsToDeleteCount} items.");
+                    SnackbarMessageQueue.Enqueue($"Successfully deleted {itemsToDeleteCount} items.");
                 } catch (ApiException ex)
                 {
                     message = _errorLocalizer.GetString(ex.Type);
@@ -295,6 +295,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [RelayCommand(CanExecute = nameof(ItemCanBeAdded))]
         public void AddItem()
         {
+            AddNewItem();
         }
 
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]

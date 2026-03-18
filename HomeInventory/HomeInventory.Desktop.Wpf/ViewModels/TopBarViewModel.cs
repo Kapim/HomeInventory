@@ -11,7 +11,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
     public partial class TopBarViewModel : ObservableObject
     {
         public event EventHandler<Household?>? SelectedHouseholdChangedEvent;
-        public event EventHandler? AddItemEvent, AddLocationEvent;
+        public event EventHandler? AddLocationEvent;
         [ObservableProperty]
         public ObservableCollection<Household> households = [];
         [ObservableProperty]
@@ -22,11 +22,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             SelectedHouseholdChangedEvent?.Invoke(this, value);
         }
 
-        [RelayCommand]
-        private void AddItem()
-        {
-            AddItemEvent?.Invoke(this, new());
-        }
 
         [RelayCommand]
         private void AddLocation()
