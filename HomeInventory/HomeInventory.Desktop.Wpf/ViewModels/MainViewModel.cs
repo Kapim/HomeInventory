@@ -25,6 +25,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly IErrorLocalizer _errorLocalizer;
         private readonly IDialogService _dialogService;
         public ObservableCollection<Household> Households = [];
+        private bool isSelectingNewLocationForItem = false;
 
         public MainViewModel(TopBarViewModel topBar,
             LocationTreeViewModel locationTree,
@@ -42,8 +43,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             TopBar.AddLocationEvent += TopBar_AddLocationEvent;
-            LocationTree.OnSelectedLocationChangedEvent += SetActiveLocationAsync;
+            LocationTree.OnSelectedLocationChangedEvent += LocationTree_OnSelectedLocationChangeEvent;
+            rightPaneViewModel.SelectNewLocationForItemsEvent += RightPaneViewModel_SelectNewLocationForItemsEvent;
 
+        }
+
+        private void RightPaneViewModel_SelectNewLocationForItemsEvent(object? sender, EventArgs e)
+        {
+            isSelectingNewLocationForItem = true;
         }
 
         private void TopBar_AddLocationEvent(object? sender, EventArgs e)
@@ -51,11 +58,17 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             LocationTree.AddLocation();
         }
 
-        private async void SetActiveLocationAsync(object? sender, LocationNodeViewModel? location)
+        private async void LocationTree_OnSelectedLocationChangeEvent(object? sender, LocationNodeViewModel? location)
         {
             if (location != null)
             {
+                if (isSelectingNewLocationForItem)
+                {
+                    await RightPane.MoveSelectedItemsToLocation(location);
+                    isSelectingNewLocationForItem = false;
+                }
                 await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
+                
             }
         }
 

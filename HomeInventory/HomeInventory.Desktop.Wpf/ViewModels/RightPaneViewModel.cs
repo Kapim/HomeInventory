@@ -7,6 +7,7 @@ using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
 using MaterialDesignThemes.Wpf;
+using HomeInventory.Desktop.Wpf.Enums;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
@@ -29,10 +30,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
         [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
         private bool isBusy = false;
-        
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
+        [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
+        private bool isSelectingNewLocation = false;
+
+        public event EventHandler? SelectNewLocationForItemsEvent;
+
+
         public ISnackbarMessageQueue SnackbarMessageQueue { get; } = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
-        private bool ItemsCanBeManipulated => !IsBusy && selectedItems.Count > 0;
-        private bool ItemCanBeAdded => !IsBusy;
+        private bool ItemsCanBeManipulated => !IsSelectingNewLocation && !IsBusy && selectedItems.Count > 0;
+        private bool ItemCanBeAdded => !IsSelectingNewLocation && !IsBusy;
 
         public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer)
         {
@@ -267,7 +276,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 message += "item?";
             else
                 message += "items?";
-            if (_dialogs.ShowConfirmationDialog("Delete items", message))
+            if (_dialogs.ShowConfirmationDialog("Delete items", message) == DialogResult.Yes)
             {
                 IsBusy = true;
                 try
@@ -301,7 +310,42 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
         public void MoveToLocation()
         {
+            IsSelectingNewLocation = true;
+            SelectNewLocationForItemsEvent?.Invoke(this, new EventArgs());
+        }
 
+        public async Task MoveSelectedItemsToLocation(LocationNodeViewModel location)
+        {
+            IsSelectingNewLocation = false;
+            var itemsToMoveCount = selectedItems.Count;
+            if (itemsToMoveCount == 0)
+                throw new InvalidOperationException("No item is selected");
+                        
+            IsBusy = true;
+            try
+            {
+                List<Task> tasks = [];
+                foreach (var itemVM in selectedItems)
+                {
+                    var item = itemVM.Item!;
+                    ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
+                    tasks.Add(_items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token));
+                }
+
+                await Task.WhenAll(tasks);
+
+                SnackbarMessageQueue.Enqueue($"Successfully moved {itemsToMoveCount} items.");
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogs.ShowError("Operace selhala", message);
+            }
+            finally
+            {
+                IsBusy = false;
+            }          
+        
         }
     }
 }

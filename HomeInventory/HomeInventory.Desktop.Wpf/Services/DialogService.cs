@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HomeInventory.Desktop.Wpf.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Windows;
@@ -18,10 +19,15 @@ namespace HomeInventory.Desktop.Wpf.Services
             ShowInfo(title, message);
         }
 
-        public bool ShowConfirmationDialog(string title, string message)
+        public DialogResult ShowConfirmationDialog(string title, string message)
         {
             var result = MessageBox.Show(message, title, MessageBoxButton.YesNoCancel);
-            return result == MessageBoxResult.Yes;
+            return result switch
+            {
+                MessageBoxResult.Yes => DialogResult.Yes,
+                MessageBoxResult.No => DialogResult.No,
+                _ => DialogResult.Cancel,
+            };
         }
     }
 }

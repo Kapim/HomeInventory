@@ -160,6 +160,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
             Assert.Single(vm.Items);
         }
 
+
         private static RightPaneViewModel CreateRightPaneVM(out MockItemsService mockItemsService, out MockDialogService mockDialogService, List<Guid>? guids = null, Guid? locationId = null)
         {
             MockLocationsService mockLocationsService = new();
