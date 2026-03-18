@@ -1,17 +1,16 @@
-﻿using HomeInventory.Client.Errors;
+using HomeInventory.Client.Errors;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Xunit.Sdk;
 
 namespace HomeInventory.Desktop.Wpf.Tests
 {
     public class MockItemsService : IItemsService
     {
         private readonly Dictionary<Guid, Item> _items = [];
+
+        public int DeleteCalls { get; private set; }
+        public int UpdateCalls { get; private set; }
 
         public void GenerateItems(List<Guid> guids, Guid locationId)
         {
@@ -20,6 +19,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
                 _items.Add(guid, new(guid, "name", 0, locationId, Guid.NewGuid(), null, null));
             }
         }
+
+        public bool Exists(Guid id) => _items.ContainsKey(id);
+
+        public Item? GetLocal(Guid id) => _items.TryGetValue(id, out var item) ? item : null;
 
         public async Task<Item> CreateAsync(ItemCreateRequest request, CancellationToken ct)
         {
@@ -32,6 +35,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
 
         public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
+            DeleteCalls++;
             if (!_items.Remove(id))
                 throw new ApiException(ApiErrorTypes.NotFound, "", 404);
         }
@@ -55,6 +59,7 @@ namespace HomeInventory.Desktop.Wpf.Tests
 
         public async Task<Item> UpdateAsync(Guid id, ItemUpdateRequest request, CancellationToken ct)
         {
+            UpdateCalls++;
             var item = await GetByIdAsync(id, ct);
             item.ChangeName(request.Name);
             item.PlacementNote = request.PlacementNote;
@@ -63,6 +68,5 @@ namespace HomeInventory.Desktop.Wpf.Tests
             item.MoveTo(request.LocationId);
             return item;
         }
-
     }
 }
