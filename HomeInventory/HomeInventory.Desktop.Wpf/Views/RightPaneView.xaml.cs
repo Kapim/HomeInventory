@@ -55,7 +55,6 @@ namespace HomeInventory.Desktop.Wpf.Views
 
         private void Grid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            Console.WriteLine(sender);
             if (sender is not DataGrid grid) return;
             if (grid.SelectedItem is null) return;
 
@@ -74,7 +73,7 @@ namespace HomeInventory.Desktop.Wpf.Views
 
                 if (row is null) return;
 
-                var cell = GetCell(grid, row, 0);
+                var cell = GetCell(grid, row, 1);
                 if (cell is null) return;
 
                 cell.Focus();

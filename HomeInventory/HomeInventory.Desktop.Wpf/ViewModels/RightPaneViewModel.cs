@@ -10,22 +10,44 @@ using MaterialDesignThemes.Wpf;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer) : ObservableObject
+    public partial class RightPaneViewModel : ObservableObject
     {
         public ObservableCollection<ItemViewModel> Items { get; } = [];
 
-        private readonly ILocationsService _locations = locations;
-        private readonly IItemsService _items = items;
-        private readonly IDialogService _dialogs = dialogs;
-        private readonly IErrorLocalizer _errorLocalizer = errorLocalizer;
+        private readonly ObservableCollection<ItemViewModel> selectedItems = [];
+
+        private readonly ILocationsService _locations;
+        private readonly IItemsService _items;
+        private readonly IDialogService _dialogs;
+        private readonly IErrorLocalizer _errorLocalizer;
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
         private bool addingNewItem = false;
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
+        [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
         private bool isBusy = false;
-
+        
         public ISnackbarMessageQueue SnackbarMessageQueue { get; } = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
+        private bool ItemsCanBeManipulated => !IsBusy && selectedItems.Count > 0;
+        private bool ItemCanBeAdded => !IsBusy;
+
+        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer)
+        {
+            _locations = locations;
+            _items = items;
+            _dialogs = dialogs;
+            _errorLocalizer = errorLocalizer;
+            selectedItems.CollectionChanged += SelectedItems_CollectionChanged;
+        }
+
+        private void SelectedItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            DeleteItemCommand.NotifyCanExecuteChanged();
+            MoveToLocationCommand.NotifyCanExecuteChanged();
+        }
 
         public void ShowSaved()
         {
@@ -35,6 +57,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
             Items.Clear();
+            selectedItems.Clear();
             addingNewItem = false;
             _location = location;
             try
@@ -42,7 +65,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 var items = await _locations.GetItemsAsync(location.Id, ct);
                 foreach (var item in items)
                 {
-                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, item));
+                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, ItemSelectedChanged, item));
                 }
             }
             catch (ApiException ex)
@@ -59,7 +82,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 _dialogs.ShowInfo("Failed to add a new item", "Finish a new item first by adding a name");
                 return;
             }
-            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, null);
+            var row = new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, ItemSelectedChanged, null);
             Items.Add(row);
             SelectedItem = row;
             addingNewItem = true;
@@ -83,6 +106,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 {
                     var item = await RunBusy(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
                     itemViewModel.SetItem(item);
+                    if (itemViewModel.IsSelected)
+                        selectedItems.Add(itemViewModel);
                     ShowSaved();
                     addingNewItem = false;
                     //fast adding of new items
@@ -208,6 +233,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
         }
 
+        private async Task ItemSelectedChanged(ItemViewModel itemViewModel, bool isSelected)
+        {
+            if (itemViewModel.IsNew)
+                return;
+            if (isSelected)
+                selectedItems.Add(itemViewModel);
+            else
+                selectedItems.Remove(itemViewModel);
+        }
+
         private async Task<T> RunBusy<T>(Func<Task<T>> action)
         {
             if (IsBusy)
@@ -219,6 +254,54 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             } finally {
                 IsBusy = false;
             }
+        }
+
+        [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
+        public async Task DeleteItem()
+        {
+            var itemsToDeleteCount = selectedItems.Count;
+            if (itemsToDeleteCount == 0)
+                return;
+            string message = $"Do you want to delete {selectedItems.Count} ";
+            if (itemsToDeleteCount == 1)
+                message += "item?";
+            else
+                message += "items?";
+            if (_dialogs.ShowConfirmationDialog("Delete items", message))
+            {
+                IsBusy = true;
+                try
+                {
+                    List<Task> tasks = [];
+                    foreach (var itemVM in selectedItems)
+                        tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
+                    await Task.WhenAll(tasks);
+
+                    SnackbarMessageQueue.Enqueue($"Successfully deleted {itemsToDeleteCount} items.");
+                } catch (ApiException ex)
+                {
+                    message = _errorLocalizer.GetString(ex.Type);
+                    _dialogs.ShowError("Operace selhala", message);
+                } finally
+                {
+                    await LoadAsync(_location!);
+                    IsBusy = false;
+
+                }
+            }
+            
+        }
+
+        [RelayCommand(CanExecute = nameof(ItemCanBeAdded))]
+        public void AddItem()
+        {
+            AddNewItem();
+        }
+
+        [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
+        public void MoveToLocation()
+        {
+
         }
     }
 }

@@ -40,7 +40,7 @@ namespace HomeInventory.Api.Controllers
                 return Ok();
             } catch (KeyNotFoundException ex)
             {
-                return BadRequest(ex.Message);
+                return NotFound(ex.Message);
             }
         }
 

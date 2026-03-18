@@ -15,10 +15,13 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private string? placementNote, description;
         [ObservableProperty]
         private int quantity;
+        [ObservableProperty]
+        private bool isSelected;
         private readonly Func<ItemViewModel, string?, Task> _itemNameChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemDescriptionChanged;
         private readonly Func<ItemViewModel, string?, Task> _itemPlacementNoteChanged;
         private readonly Func<ItemViewModel, int, Task> _itemQuantityChanged;
+        private readonly Func<ItemViewModel, bool, Task> _itemSelectedChanged;
 
         public bool IsNew => Item == null;
 
@@ -33,12 +36,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             Func<ItemViewModel, string?, Task> itemDescriptionChanged,
             Func<ItemViewModel, string?, Task> itemPlacementNoteChanged,
             Func<ItemViewModel, int, Task> itemQuantityChanged,
+            Func<ItemViewModel, bool, Task> itemSelectedChanged,
             Item? item = null)
         {         
             _itemNameChanged = itemNameChangedCallback;
             _itemDescriptionChanged = itemDescriptionChanged;
             _itemPlacementNoteChanged = itemPlacementNoteChanged;
             _itemQuantityChanged = itemQuantityChanged;
+            _itemSelectedChanged = itemSelectedChanged;
             Quantity = 1;
             Item = item;
             if (Item != null)
@@ -88,6 +93,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 return;
             }
             await _itemQuantityChanged(this, value);
+        }
+
+        async partial void OnIsSelectedChanged(bool value)
+        {
+            if (_suprressNextOnChange)
+            {
+                _suprressNextOnChange = false;
+                return;
+            }
+            await _itemSelectedChanged(this, value);
         }
 
         public static ItemUpdateRequest GetUpdateRequest(Item item) =>

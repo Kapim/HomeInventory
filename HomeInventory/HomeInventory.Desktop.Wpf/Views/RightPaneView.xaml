@@ -20,10 +20,32 @@
         </Style>
     </UserControl.Resources>
     <Grid>
-       
-        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded" IsReadOnly="{Binding IsBusy}" >
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Command="{Binding AddItemCommand}" Margin="0,0,8,0" Grid.Column="1">
+                <materialDesign:PackIcon Kind="Add" Width="20" Height="20"/>
+            </Button>
+            <Button Command="{Binding DeleteItemCommand}" Margin="0,0,8,0" Grid.Column="2">
+                <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
+            </Button>
+            <Button Command="{Binding MoveToLocationCommand}" Margin="0,0,8,0" Grid.Column="3">
+                <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
+            </Button>
+        </Grid>
+        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded" IsReadOnly="{Binding IsBusy}"  Grid.Row="1">
             
             <DataGrid.Columns>
+                <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsThreeState = "False"/>
+
                 <DataGridTextColumn EditingElementStyle="{StaticResource NameTemplate}" Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
                 <DataGridTemplateColumn Header="Quantity">
                     <DataGridTemplateColumn.CellTemplate>
@@ -43,7 +65,7 @@
         </DataGrid>
         <Border Background="#66FFFFFF"
                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"
-                Panel.ZIndex="10">  
+                Panel.ZIndex="10" Grid.Row="1">  
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar Width="140" Height="6" IsIndeterminate="True"/>
                 <TextBlock Text="Ukládám..." Margin="0,8,0,0" HorizontalAlignment="Center"/>
