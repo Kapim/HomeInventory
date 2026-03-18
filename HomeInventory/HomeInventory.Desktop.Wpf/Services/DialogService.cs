@@ -17,5 +17,11 @@ namespace HomeInventory.Desktop.Wpf.Services
         {
             ShowInfo(title, message);
         }
+
+        public bool ShowConfirmationDialog(string title, string message)
+        {
+            var result = MessageBox.Show(message, title, MessageBoxButton.YesNoCancel);
+            return result == MessageBoxResult.Yes;
+        }
     }
 }

@@ -57,6 +57,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
             Items.Clear();
+            selectedItems.Clear();
             addingNewItem = false;
             _location = location;
             try
@@ -256,9 +257,39 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         }
 
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
-        public void DeleteItem()
+        public async Task DeleteItem()
         {
+            var itemsToDeleteCount = selectedItems.Count;
+            if (itemsToDeleteCount == 0)
+                return;
+            string message = $"Do you want to delete {selectedItems.Count} ";
+            if (itemsToDeleteCount == 1)
+                message += "item?";
+            else
+                message += "items?";
+            if (_dialogs.ShowConfirmationDialog("Delte items", message))
+            {
+                IsBusy = true;
+                try
+                {
+                    List<Task> tasks = [];
+                    foreach (var itemVM in selectedItems)
+                        tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
+                    await Task.WhenAll(tasks);
 
+                    SnackbarMessageQueue.Enqueue($"Sucessfully deleted {itemsToDeleteCount} items.");
+                } catch (ApiException ex)
+                {
+                    message = _errorLocalizer.GetString(ex.Type);
+                    _dialogs.ShowError("Operace selhala", message);
+                } finally
+                {
+                    await LoadAsync(_location!);
+                    IsBusy = false;
+
+                }
+            }
+            
         }
 
         [RelayCommand(CanExecute = nameof(ItemCanBeAdded))]
