@@ -1,5 +1,6 @@
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Services;
+using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Enums;
 using HomeInventory.Desktop.Wpf.ViewModels;
 using HomeInventory.Wpf.Tests;

@@ -322,29 +322,28 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 throw new InvalidOperationException("No item is selected");
                         
             IsBusy = true;
-            try
+            int failedToMoveCount = 0;
+            foreach (var itemVM in selectedItems)
             {
-                List<Task> tasks = [];
-                foreach (var itemVM in selectedItems)
+                var item = itemVM.Item!;
+                ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
+                try
                 {
-                    var item = itemVM.Item!;
-                    ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
-                    tasks.Add(_items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token));
+                    await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
                 }
-
-                await Task.WhenAll(tasks);
-
+                catch (ApiException)
+                {
+                    ++failedToMoveCount;
+                }
+            }
+            if (failedToMoveCount > 0)
+            {
+                SnackbarMessageQueue.Enqueue($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+            } else
+            {
                 SnackbarMessageQueue.Enqueue($"Successfully moved {itemsToMoveCount} items.");
             }
-            catch (ApiException ex)
-            {
-                var message = _errorLocalizer.GetString(ex.Type);
-                _dialogs.ShowError("Operace selhala", message);
-            }
-            finally
-            {
-                IsBusy = false;
-            }          
+            IsBusy = false;
         
         }
     }
