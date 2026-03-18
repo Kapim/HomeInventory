@@ -319,7 +319,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             IsSelectingNewLocation = false;
             var itemsToMoveCount = selectedItems.Count;
             if (itemsToMoveCount == 0)
-                throw new InvalidOperationException("No item is selected");
+                return;
                         
             IsBusy = true;
             int failedToMoveCount = 0;
