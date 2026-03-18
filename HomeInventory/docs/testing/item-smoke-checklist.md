@@ -44,8 +44,12 @@ Cíl: rychle ověřit, že základní práce s itemy funguje po změnách.
 - aplikace nespadne
 - po návratu API jde pokračovat normálně
 
-## 6) Cleanup (volitelné)
-- smazat testovací item `Smoke_Item_001_EDIT` nebo ho přejmenovat na interní test data
+## 6) Delete
+**Given** existuje `Smoke_Item_001_EDIT`
+**When** smažu item `Smoke_Item_001_EDIT`
+**Then**
+- item zmizí z DB
+- item zmizí z DB
 
 ---
 
