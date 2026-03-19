@@ -18,7 +18,7 @@ namespace HomeInventory.Client.Tests
             TestMapper(HttpStatusCode.NotFound, ApiErrorTypes.NotFound, 404);
             TestMapper(HttpStatusCode.Conflict, ApiErrorTypes.Conflict, 409);
             TestMapper(HttpStatusCode.InternalServerError, ApiErrorTypes.Server, 500);
-            TestMapper(HttpStatusCode.LoopDetected, ApiErrorTypes.Unknown, 508);
+            TestMapper(HttpStatusCode.LoopDetected, ApiErrorTypes.Server, 508);
         }
 
         [Fact]
