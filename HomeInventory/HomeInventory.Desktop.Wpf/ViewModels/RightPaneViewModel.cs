@@ -21,6 +21,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly IItemsService _items;
         private readonly IDialogService _dialogs;
         private readonly IErrorLocalizer _errorLocalizer;
+        private readonly INotificationsService _notifications;
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
@@ -39,16 +40,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public event EventHandler? SelectNewLocationForItemsEvent;
 
 
-        public ISnackbarMessageQueue SnackbarMessageQueue { get; } = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
         private bool ItemsCanBeManipulated => !IsSelectingNewLocation && !IsBusy && selectedItems.Count > 0;
         private bool ItemCanBeAdded => !IsSelectingNewLocation && !IsBusy;
 
-        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer)
+        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer, INotificationsService notifications)
         {
             _locations = locations;
             _items = items;
             _dialogs = dialogs;
             _errorLocalizer = errorLocalizer;
+            _notifications = notifications;
             selectedItems.CollectionChanged += SelectedItems_CollectionChanged;
         }
 
@@ -60,11 +61,12 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public void ShowSaved()
         {
-            SnackbarMessageQueue.Enqueue("Uloženo");
+            _notifications.Success("Uloženo");
         }
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
+            IsBusy = true;
             Items.Clear();
             selectedItems.Clear();
             addingNewItem = false;
@@ -81,6 +83,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            } finally
+            {
+                IsBusy = false;
             }
         }
 
@@ -286,7 +291,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                         tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
                     await Task.WhenAll(tasks);
 
-                    SnackbarMessageQueue.Enqueue($"Successfully deleted {itemsToDeleteCount} items.");
+                    _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
                 } catch (ApiException ex)
                 {
                     message = _errorLocalizer.GetString(ex.Type);
@@ -338,11 +343,12 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             if (failedToMoveCount > 0)
             {
-                SnackbarMessageQueue.Enqueue($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+                _notifications.Success($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
             } else
             {
-                SnackbarMessageQueue.Enqueue($"Successfully moved {itemsToMoveCount} items.");
+                _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
             }
+            await LoadAsync(location, new CancellationTokenSource().Token);
             IsBusy = false;
         
         }

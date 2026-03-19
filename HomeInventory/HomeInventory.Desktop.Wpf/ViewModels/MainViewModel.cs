@@ -5,6 +5,7 @@ using HomeInventory.Client.Services;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using HomeInventory.Desktop.Wpf.Views;
+using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -27,12 +28,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public ObservableCollection<Household> Households = [];
         private bool isSelectingNewLocationForItem = false;
 
+        private readonly INotificationsService _notifications;
+        public ISnackbarMessageQueue SnackbarMessageQueue => _notifications.SnackbarMessageQueue;
+
         public MainViewModel(TopBarViewModel topBar,
             LocationTreeViewModel locationTree,
             RightPaneViewModel rightPaneViewModel,
             IHouseholdsService householdsService,
             IErrorLocalizer errorLocalizer,
-            IDialogService dialogService)
+            IDialogService dialogService,
+            INotificationsService notifications)
         {
             TopBar = topBar;
             LocationTree = locationTree;
@@ -40,6 +45,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             _householdsService = householdsService;
             _errorLocalizer = errorLocalizer;
             _dialogService = dialogService;
+            _notifications = notifications;
 
             TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             TopBar.AddLocationEvent += TopBar_AddLocationEvent;
@@ -66,8 +72,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 {
                     await RightPane.MoveSelectedItemsToLocation(location);
                     isSelectingNewLocationForItem = false;
+                } else
+                {
+                    await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
                 }
-                await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
                 
             }
         }

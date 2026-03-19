@@ -80,11 +80,6 @@
             </StackPanel>
         </Border>
 
-        <materialDesign:Snackbar
-            x:Name="AppSnackbar"
-            MessageQueue="{Binding SnackbarMessageQueue}"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Bottom"
-            Margin="16"/>   
+        
     </Grid>
 </UserControl>

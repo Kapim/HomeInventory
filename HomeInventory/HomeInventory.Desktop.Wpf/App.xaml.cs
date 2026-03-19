@@ -43,6 +43,7 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<IDialogService, DialogService>();
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<IErrorLocalizer, ErrorLocalizerService>();
+                    services.AddSingleton<INotificationsService, NotificationsService>();
 
                     services.AddHomeInventoryClient(new Uri("http://localhost:5046/"));
 
