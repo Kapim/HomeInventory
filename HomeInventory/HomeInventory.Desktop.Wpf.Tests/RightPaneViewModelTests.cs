@@ -312,6 +312,82 @@ namespace HomeInventory.Desktop.Wpf.Tests
             Assert.Equal(1, mockNotificationsService.WarningCalls);
         }
 
+        [Fact]
+        public async Task UpdateName_OnFailure_RollsBackToServerValue()
+        {
+            var id = Guid.NewGuid();
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            mockItemsService.FailUpdateFor(id);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var itemVm = vm.Items.Single();
+            var original = itemVm.Name;
+
+            itemVm.Name = "should-fail";
+            await WaitUntilAsync(() => mockDialogs.Messages.Count > 0);
+
+            Assert.Equal(original, itemVm.Name);
+            Assert.Equal(original, itemVm.Item!.Name);
+        }
+
+        [Fact]
+        public async Task UpdateDescription_OnFailure_RollsBackToServerValue()
+        {
+            var id = Guid.NewGuid();
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            mockItemsService.FailUpdateFor(id);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var itemVm = vm.Items.Single();
+            var original = itemVm.Description;
+
+            itemVm.Description = "should-fail";
+            await WaitUntilAsync(() => mockDialogs.Messages.Count > 0);
+
+            Assert.Equal(original, itemVm.Description);
+            Assert.Equal(original, itemVm.Item!.Description);
+        }
+
+        [Fact]
+        public async Task UpdatePlacementNote_OnFailure_RollsBackToServerValue()
+        {
+            var id = Guid.NewGuid();
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            mockItemsService.FailUpdateFor(id);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var itemVm = vm.Items.Single();
+            var original = itemVm.PlacementNote;
+
+            itemVm.PlacementNote = "should-fail";
+            await WaitUntilAsync(() => mockDialogs.Messages.Count > 0);
+
+            Assert.Equal(original, itemVm.PlacementNote);
+            Assert.Equal(original, itemVm.Item!.PlacementNote);
+        }
+
+        [Fact]
+        public async Task UpdateQuantity_OnFailure_RollsBackToServerValue()
+        {
+            var id = Guid.NewGuid();
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            mockItemsService.FailUpdateFor(id);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var itemVm = vm.Items.Single();
+            var original = itemVm.Quantity;
+
+            itemVm.Quantity = original + 5;
+            await WaitUntilAsync(() => mockDialogs.Messages.Count > 0);
+
+            Assert.Equal(original, itemVm.Quantity);
+            Assert.Equal(original, itemVm.Item!.Quantity);
+        }
+
         private static RightPaneViewModel CreateRightPaneVM(
             out MockItemsService mockItemsService,
             out MockDialogService mockDialogService,
