@@ -27,7 +27,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public IReadOnlyList<LocationNodeViewModel>? Locations { get; private set; }
         [ObservableProperty]
         private LocationNodeViewModel? selectedLocation;
-        public EventHandler<LocationNodeViewModel?>? OnSelectedLocationChangedEvent;
+        public EventHandler<LocationNodeViewModel?>? OnSelectedLocationChangedEvent; //<old_location, new_location>
         [ObservableProperty] 
         private LocationNodeViewModel? editingNode;
         private Guid selectedHouseholdId;
@@ -60,8 +60,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             
         }
-
-        partial void OnSelectedLocationChanged(LocationNodeViewModel? value)
+        partial void OnSelectedLocationChanging(LocationNodeViewModel? value)
         {
             OnSelectedLocationChangedEvent?.Invoke(this, value);
         }

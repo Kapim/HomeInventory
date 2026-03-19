@@ -7,6 +7,7 @@ using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
 using System.Collections.ObjectModel;
 using MaterialDesignThemes.Wpf;
+using HomeInventory.Desktop.Wpf.Enums;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
@@ -20,6 +21,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly IItemsService _items;
         private readonly IDialogService _dialogs;
         private readonly IErrorLocalizer _errorLocalizer;
+        private readonly INotificationsService _notifications;
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
@@ -29,17 +31,25 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
         [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
         private bool isBusy = false;
-        
-        public ISnackbarMessageQueue SnackbarMessageQueue { get; } = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
-        private bool ItemsCanBeManipulated => !IsBusy && selectedItems.Count > 0;
-        private bool ItemCanBeAdded => !IsBusy;
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
+        [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
+        private bool isSelectingNewLocation = false;
 
-        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer)
+        public event EventHandler? SelectNewLocationForItemsEvent;
+
+
+        private bool ItemsCanBeManipulated => !IsSelectingNewLocation && !IsBusy && selectedItems.Count > 0;
+        private bool ItemCanBeAdded => !IsSelectingNewLocation && !IsBusy;
+
+        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer, INotificationsService notifications)
         {
             _locations = locations;
             _items = items;
             _dialogs = dialogs;
             _errorLocalizer = errorLocalizer;
+            _notifications = notifications;
             selectedItems.CollectionChanged += SelectedItems_CollectionChanged;
         }
 
@@ -51,11 +61,12 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public void ShowSaved()
         {
-            SnackbarMessageQueue.Enqueue("Uloženo");
+            _notifications.Success("Uloženo");
         }
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
+            IsBusy = true;
             Items.Clear();
             selectedItems.Clear();
             addingNewItem = false;
@@ -72,6 +83,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var message = _errorLocalizer.GetString(ex.Type);
                 _dialogs.ShowError("Operace selhala", message);
+            } finally
+            {
+                IsBusy = false;
             }
         }
 
@@ -267,7 +281,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 message += "item?";
             else
                 message += "items?";
-            if (_dialogs.ShowConfirmationDialog("Delete items", message))
+            if (_dialogs.ShowConfirmationDialog("Delete items", message) == DialogResult.Yes)
             {
                 IsBusy = true;
                 try
@@ -277,7 +291,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                         tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
                     await Task.WhenAll(tasks);
 
-                    SnackbarMessageQueue.Enqueue($"Successfully deleted {itemsToDeleteCount} items.");
+                    _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
                 } catch (ApiException ex)
                 {
                     message = _errorLocalizer.GetString(ex.Type);
@@ -301,7 +315,51 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
         public void MoveToLocation()
         {
+            IsSelectingNewLocation = true;
+            SelectNewLocationForItemsEvent?.Invoke(this, new EventArgs());
+        }
 
+        public async Task MoveSelectedItemsToLocation(LocationNodeViewModel location)
+        {
+            
+            IsSelectingNewLocation = false;
+            var itemsToMoveCount = selectedItems.Count;
+            if (itemsToMoveCount == 0)
+                return;
+                        
+            IsBusy = true;
+            try
+            {
+                int failedToMoveCount = 0;
+                foreach (var itemVM in selectedItems)
+                {
+                    var item = itemVM.Item!;
+                    ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
+                    try
+                    {
+                        await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
+                    }
+                    catch (ApiException)
+                    {
+                        ++failedToMoveCount;
+                    }
+                }
+                if (failedToMoveCount > 0)
+                {
+                    _notifications.Success($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+                }
+                else
+                {
+                    _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
+                }
+            } finally
+            {
+                await LoadAsync(location, new CancellationTokenSource().Token);
+                IsBusy = false;
+            }          
+
+
+        
         }
     }
 }
