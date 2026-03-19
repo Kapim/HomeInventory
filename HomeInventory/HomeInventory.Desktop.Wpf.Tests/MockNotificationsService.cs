@@ -1,28 +1,33 @@
-﻿using HomeInventory.Desktop.Wpf.Services;
+using HomeInventory.Desktop.Wpf.Services;
 using MaterialDesignThemes.Wpf;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace HomeInventory.Desktop.Wpf.Tests
 {
     public class MockNotificationsService : INotificationsService
     {
-        public ISnackbarMessageQueue SnackbarMessageQueue => throw new NotImplementedException();
+        public ISnackbarMessageQueue SnackbarMessageQueue => null!;
 
         public List<string> Messages { get; } = [];
-        public int SuccessCalls = 0;
-        public int ErrorCalls = 0;
+        public int SuccessCalls { get; private set; }
+        public int WarningCalls { get; private set; }
+        public int ErrorCalls { get; private set; }
+
         public void Error(string text)
         {
             Messages.Add(text);
-            ++ErrorCalls;
+            ErrorCalls++;
         }
 
         public void Success(string text)
         {
             Messages.Add(text);
-            ++SuccessCalls;
+            SuccessCalls++;
+        }
+
+        public void Warning(string text)
+        {
+            Messages.Add(text);
+            WarningCalls++;
         }
     }
 }

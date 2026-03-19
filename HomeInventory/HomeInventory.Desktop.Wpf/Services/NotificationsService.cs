@@ -22,5 +22,10 @@ namespace HomeInventory.Desktop.Wpf.Services
         {
             SnackbarMessageQueue.Enqueue(text);
         }
+
+        public void Warning(string text)
+        {
+            SnackbarMessageQueue.Enqueue(text);
+        }
     }
 }

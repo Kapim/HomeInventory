@@ -7,6 +7,8 @@ namespace HomeInventory.Desktop.Wpf.Services
     {
         public ISnackbarMessageQueue SnackbarMessageQueue { get; }
         public void Success(string text);
+
+        public void Warning(string text);
         public void Error(string text);
     }
 }
