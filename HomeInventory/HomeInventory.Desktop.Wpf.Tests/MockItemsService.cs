@@ -8,6 +8,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
     public class MockItemsService : IItemsService
     {
         private readonly Dictionary<Guid, Item> _items = [];
+        private readonly HashSet<Guid> _updateFailIds = [];
+        private readonly HashSet<Guid> _deleteFailIds = [];
 
         public int DeleteCalls { get; private set; }
         public int UpdateCalls { get; private set; }
@@ -20,46 +22,55 @@ namespace HomeInventory.Desktop.Wpf.Tests
             }
         }
 
+        public void FailUpdateFor(Guid id) => _updateFailIds.Add(id);
+        public void FailDeleteFor(Guid id) => _deleteFailIds.Add(id);
+
         public bool Exists(Guid id) => _items.ContainsKey(id);
 
         public Item? GetLocal(Guid id) => _items.TryGetValue(id, out var item) ? item : null;
 
-        public async Task<Item> CreateAsync(ItemCreateRequest request, CancellationToken ct)
+        public Task<Item> CreateAsync(ItemCreateRequest request, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(request.Name))
                 throw new ApiException(ApiErrorTypes.Validation, "", 400);
+
             var item = new Item(Guid.NewGuid(), request.Name, request.Quantity, request.LocationId, Guid.NewGuid(), request.PlacementNote, request.Description);
             _items.Add(item.Id, item);
-            return item;
+            return Task.FromResult(item);
         }
 
-        public async Task DeleteAsync(Guid id, CancellationToken ct)
+        public Task DeleteAsync(Guid id, CancellationToken ct)
         {
             DeleteCalls++;
+            if (_deleteFailIds.Contains(id))
+                throw new ApiException(ApiErrorTypes.Server, "", 500);
+
             if (!_items.Remove(id))
                 throw new ApiException(ApiErrorTypes.NotFound, "", 404);
+
+            return Task.CompletedTask;
         }
 
-        public async Task<Item> GetByIdAsync(Guid id, CancellationToken ct)
+        public Task<Item> GetByIdAsync(Guid id, CancellationToken ct)
         {
             if (_items.TryGetValue(id, out var item))
-            {
-                return item;
-            }
-            else
-            {
-                throw new ApiException(ApiErrorTypes.NotFound, "", 404);
-            }
+                return Task.FromResult(item);
+
+            throw new ApiException(ApiErrorTypes.NotFound, "", 404);
         }
 
-        public async Task<IReadOnlyList<Item>> SearchAsync(string query, CancellationToken ct)
+        public Task<IReadOnlyList<Item>> SearchAsync(string query, CancellationToken ct)
         {
-            return [.. _items.Select(x => x.Value).Where(x => x.Name.Contains(query.Trim()))];
+            IReadOnlyList<Item> result = [.. _items.Values.Where(x => x.Name.Contains(query.Trim()))];
+            return Task.FromResult(result);
         }
 
         public async Task<Item> UpdateAsync(Guid id, ItemUpdateRequest request, CancellationToken ct)
         {
             UpdateCalls++;
+            if (_updateFailIds.Contains(id))
+                throw new ApiException(ApiErrorTypes.Server, "", 500);
+
             var item = await GetByIdAsync(id, ct);
             item.ChangeName(request.Name);
             item.PlacementNote = request.PlacementNote;

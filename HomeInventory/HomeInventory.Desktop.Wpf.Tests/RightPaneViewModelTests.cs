@@ -1,9 +1,9 @@
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Services;
-using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Enums;
 using HomeInventory.Desktop.Wpf.ViewModels;
 using HomeInventory.Wpf.Tests;
+
 namespace HomeInventory.Desktop.Wpf.Tests
 {
     public class RightPaneViewModelTests
@@ -252,16 +252,92 @@ namespace HomeInventory.Desktop.Wpf.Tests
             await vm.MoveSelectedItemsToLocation(new(Guid.NewGuid(), "target", null, 0));
         }
 
+        [Fact]
+        public async Task SingleItemUpdate_DoesNotTriggerFullReload()
+        {
+            var ids = new List<Guid> { Guid.NewGuid() };
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var _, out var _, out var mockLocationsService, out var _, ids, locationId);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0));
+            Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
+
+            var itemVm = vm.Items.Single();
+            itemVm.Name = "ChangedName";
+            await WaitUntilAsync(() => itemVm.Item is not null && itemVm.Item.Name == "ChangedName");
+
+            Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
+        }
+
+        [Fact]
+        public async Task DeleteItem_PerformsReconcileReload_AfterPartialFailure()
+        {
+            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+            var locationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogService, out var mockLocationsService, out var mockNotificationsService, ids, locationId);
+            mockDialogService.NextConfirmationResult = DialogResult.Yes;
+            mockItemsService.FailDeleteFor(ids[1]);
+
+            await vm.LoadAsync(new(locationId, "location", null, 0));
+            Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
+
+            vm.Items[0].IsSelected = true;
+            vm.Items[1].IsSelected = true;
+
+            await vm.DeleteItem();
+
+            Assert.Equal(2, mockLocationsService.GetItemsAsyncCalls);
+            Assert.Equal(1, mockNotificationsService.WarningCalls);
+        }
+
+        [Fact]
+        public async Task MoveSelectedItemsToLocation_PerformsReconcileReload_AndWarningOnPartialFailure()
+        {
+            var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+            var sourceLocationId = Guid.NewGuid();
+            var targetLocationId = Guid.NewGuid();
+            var vm = CreateRightPaneVM(out var mockItemsService, out var _, out var mockLocationsService, out var mockNotificationsService, ids, sourceLocationId);
+            mockItemsService.FailUpdateFor(ids[2]);
+
+            await vm.LoadAsync(new(sourceLocationId, "source", null, 0));
+            Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
+
+            vm.Items[0].IsSelected = true;
+            vm.Items[2].IsSelected = true;
+
+            await vm.MoveSelectedItemsToLocation(new(targetLocationId, "target", null, 0));
+
+            Assert.Equal(2, mockLocationsService.GetItemsAsyncCalls);
+            Assert.Equal(1, mockNotificationsService.WarningCalls);
+        }
+
         private static RightPaneViewModel CreateRightPaneVM(
             out MockItemsService mockItemsService,
             out MockDialogService mockDialogService,
             List<Guid>? guids = null,
             Guid? locationId = null)
+            => CreateRightPaneVM(out mockItemsService, out mockDialogService, out _, out _, guids, locationId);
+
+        private static RightPaneViewModel CreateRightPaneVM(
+            out MockItemsService mockItemsService,
+            out MockDialogService mockDialogService,
+            out MockLocationsService mockLocationsService,
+            out MockNotificationsService mockNotificationsService,
+            List<Guid>? guids = null,
+            Guid? locationId = null)
         {
-            MockLocationsService mockLocationsService = new();
-            mockItemsService = new();
-            mockDialogService = new();
-            RightPaneViewModel vm = new(mockLocationsService, mockItemsService, mockDialogService, new ErrorLocalizerService(), new MockNotificationsService());
+            mockLocationsService = new MockLocationsService();
+            mockItemsService = new MockItemsService();
+            mockDialogService = new MockDialogService();
+            mockNotificationsService = new MockNotificationsService();
+
+            var vm = new RightPaneViewModel(
+                mockLocationsService,
+                mockItemsService,
+                mockDialogService,
+                new ErrorLocalizerService(),
+                mockNotificationsService);
+
             if (guids != null && locationId != null)
             {
                 mockLocationsService.GenerateItems(guids, (Guid)locationId);
