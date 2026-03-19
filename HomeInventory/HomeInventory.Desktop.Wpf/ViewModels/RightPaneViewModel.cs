@@ -273,6 +273,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
         public async Task DeleteItem()
         {
+            
             var itemsToDeleteCount = selectedItems.Count;
             if (itemsToDeleteCount == 0)
                 return;
@@ -281,26 +282,32 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 message += "item?";
             else
                 message += "items?";
+
             if (_dialogs.ShowConfirmationDialog("Delete items", message) == DialogResult.Yes)
             {
                 IsBusy = true;
                 try
                 {
-                    List<Task> tasks = [];
-                    foreach (var itemVM in selectedItems)
-                        tasks.Add(_items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token));
-                    await Task.WhenAll(tasks);
 
-                    _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
-                } catch (ApiException ex)
-                {
-                    message = _errorLocalizer.GetString(ex.Type);
-                    _dialogs.ShowError("Operace selhala", message);
+                    int failedToDeleteCount = 0;
+                    foreach (var itemVM in selectedItems)
+                        try
+                        {
+                            await _items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token);
+                        }
+                        catch (ApiException)
+                        {
+                            ++failedToDeleteCount;
+                        }
+
+                    if (failedToDeleteCount > 0)
+                        _notifications.Warning($"Successfully deleted {itemsToDeleteCount - failedToDeleteCount} items out of {itemsToDeleteCount} selected items.");
+                    else
+                        _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
                 } finally
                 {
                     await LoadAsync(_location!);
                     IsBusy = false;
-
                 }
             }
             
@@ -346,7 +353,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 }
                 if (failedToMoveCount > 0)
                 {
-                    _notifications.Success($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+                    _notifications.Warning($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
                 }
                 else
                 {
