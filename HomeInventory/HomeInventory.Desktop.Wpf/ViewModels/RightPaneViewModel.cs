@@ -321,38 +321,44 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public async Task MoveSelectedItemsToLocation(LocationNodeViewModel location)
         {
+            
             IsSelectingNewLocation = false;
             var itemsToMoveCount = selectedItems.Count;
             if (itemsToMoveCount == 0)
                 return;
                         
             IsBusy = true;
-            int failedToMoveCount = 0;
-            foreach (var itemVM in selectedItems)
+            try
             {
-                var item = itemVM.Item!;
-                ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
-                try
+                int failedToMoveCount = 0;
+                foreach (var itemVM in selectedItems)
                 {
-                    await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
+                    var item = itemVM.Item!;
+                    ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
+                    try
+                    {
+                        await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
+                    }
+                    catch (ApiException)
+                    {
+                        ++failedToMoveCount;
+                    }
                 }
-                catch (ApiException)
+                if (failedToMoveCount > 0)
                 {
-                    ++failedToMoveCount;
+                    _notifications.Success($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
                 }
-                finally
+                else
                 {
-                    await LoadAsync(location, new CancellationTokenSource().Token);
+                    _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
                 }
-            }
-            if (failedToMoveCount > 0)
+            } finally
             {
-                _notifications.Success($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
-            } else
-            {
-                _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
-            }
-            IsBusy = false;
+                await LoadAsync(location, new CancellationTokenSource().Token);
+                IsBusy = false;
+            }          
+
+
         
         }
     }

@@ -7,7 +7,11 @@ namespace HomeInventory.Desktop.Wpf.Services
 {
     public class NotificationsService : INotificationsService
     {
-        public ISnackbarMessageQueue SnackbarMessageQueue => new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
+        public ISnackbarMessageQueue SnackbarMessageQueue { get; }
+        public NotificationsService()
+        {
+            SnackbarMessageQueue = new SnackbarMessageQueue(TimeSpan.FromSeconds(2));
+        }
 
         public void Error(string text)
         {
