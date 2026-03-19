@@ -340,6 +340,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 {
                     ++failedToMoveCount;
                 }
+                finally
+                {
+                    await LoadAsync(location, new CancellationTokenSource().Token);
+                }
             }
             if (failedToMoveCount > 0)
             {
@@ -348,7 +352,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
             }
-            await LoadAsync(location, new CancellationTokenSource().Token);
             IsBusy = false;
         
         }
