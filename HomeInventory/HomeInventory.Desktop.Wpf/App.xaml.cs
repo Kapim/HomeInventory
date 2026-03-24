@@ -32,7 +32,6 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<ShellWindowViewModel>();
                     services.AddTransient<LoginViewModel>();
                     services.AddTransient<MainViewModel>();
-                    services.AddTransient<TopBarViewModel>();
                     services.AddTransient<ItemsSearchViewModel>();
                     services.AddTransient<LocationNodeViewModel>();
                     services.AddTransient<LocationTreeViewModel>();
@@ -44,6 +43,7 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<IErrorLocalizer, ErrorLocalizerService>();
                     services.AddSingleton<INotificationsService, NotificationsService>();
+                    services.AddSingleton<IBusyService, BusyService>();
 
                     services.AddHomeInventoryClient(new Uri("http://localhost:5046/"));
 

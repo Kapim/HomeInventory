@@ -153,5 +153,11 @@ namespace HomeInventory.Infrastructure.Repositories
             _db.Update(location);
             await _db.SaveChangesAsync(ct);
         }
+
+        public async Task DeleteAsync(Location location, CancellationToken ct)
+        {            
+            _db.Locations.Remove(location);
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }

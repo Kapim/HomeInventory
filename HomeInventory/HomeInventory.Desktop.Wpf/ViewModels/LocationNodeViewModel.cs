@@ -18,7 +18,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private bool isEditing;
 
         [ObservableProperty]
-        private bool isNew;
+        private bool isNew = false;
         [ObservableProperty]
         private bool shouldFocusName;
         [ObservableProperty]
