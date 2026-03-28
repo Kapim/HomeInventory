@@ -39,9 +39,9 @@
             <Button Command="{Binding DeleteLocationCommand}" Margin="0,0,8,0" Grid.Column="2">
                 <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
             </Button>
-            <Button Command="{Binding MoveToLocationCommand}" Margin="0,0,8,0" Grid.Column="3">
+            <!--Button Command="{Binding MoveToLocationCommand}" Margin="0,0,8,0" Grid.Column="3">
                 <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
-            </Button>
+            </Button-->
             <Button Command="{Binding RenameLocationCommand}" Margin="0,0,8,0" Grid.Column="4">
                 <materialDesign:PackIcon Kind="Rename" Width="20" Height="20"/>
             </Button>
