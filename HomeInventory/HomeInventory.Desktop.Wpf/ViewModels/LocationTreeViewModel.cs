@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HomeInventory.Client.Errors;
+using HomeInventory.Client.Mapping;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
@@ -26,11 +27,22 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private Dictionary<Guid, LocationNodeViewModel> _byId = [];
         public IReadOnlyList<LocationNodeViewModel>? Locations { get; private set; }
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(DeleteLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RenameLocationCommand))]
         private LocationNodeViewModel? selectedLocation;
-        public EventHandler<LocationNodeViewModel?>? OnSelectedLocationChangedEvent; //<old_location, new_location>
+        public EventHandler<LocationNodeViewModel?>? OnSelectedLocationChangedEvent;
+
         [ObservableProperty] 
         private LocationNodeViewModel? editingNode;
         private Guid selectedHouseholdId;
+
+        public event EventHandler<Household?>? SelectedHouseholdChangedEvent;
+        [ObservableProperty]
+        public ObservableCollection<Household> households = [];
+        [ObservableProperty]
+        public Household? selectedHousehold;
+
+        private bool CanManipulateLocation => SelectedLocation != null && !SelectedLocation.IsNew;
 
         public async Task LoadAsync(Guid householdId, CancellationToken ct)
         {
@@ -38,7 +50,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             try
             {
                 var locations = await _households.GetLocationsAsync(householdId, ct);
-                Locations = [.. locations.Select(x => new LocationNodeViewModel(x.Id, x.Name, x.ParentLocationId, x.SortOrder))];
+                Locations = [.. locations.Select(x => new LocationNodeViewModel(x))];
                 _byId = Locations.ToDictionary(x => x.Id);
 
                 foreach (var location in Locations)
@@ -64,27 +76,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             OnSelectedLocationChangedEvent?.Invoke(this, value);
         }
-
-        public void AddLocation()
-        {
-            var parent = SelectedLocation;
-
-            if (EditingNode is not null) return;
-
-            var sort = parent?.Children.Count ?? RootLocations.Count;
-            var draft = LocationNodeViewModel.CreateDraft(parent?.Id, sort);
-
-            if (parent is null)
-                RootLocations.Add(draft);
-            else
-            {
-                parent.IsExpanded = true;
-                parent.Children.Add(draft);
-            }
-
-            EditingNode = draft;
-            SelectedLocation = draft; 
-        }
+       
 
         [RelayCommand]
         public async Task CommitEdit()
@@ -100,9 +92,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 try
                 {
                     var created = await _locations.CreateLocationAsync(new LocationCreateRequest(location.Name, LocationType.Other, location.ParentId, 0, null, selectedHouseholdId), new CancellationTokenSource().Token);
-                    location.FillData(created);
-                    location.IsNew = false;
-
+                    location.SetLocation(LocationMapping.MapToListItem(created));
                     location.IsEditing = false;
                     location.ShouldFocusName = false;
                     EditingNode = null;
@@ -115,12 +105,16 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    await _locations.RenameAsync(location.Id, location.Name, new CancellationTokenSource().Token);
+                    var newLocation = await _locations.RenameAsync(location.Id, location.Name, new CancellationTokenSource().Token);
+                    location.SetLocation(LocationMapping.MapToListItem(newLocation));
+                    location.IsEditing = false;
+                    EditingNode = null;
                 }
                 catch (ApiException ex)
                 {
                     var message = _errorLocalizer.GetString(ex.Type);
                     _dialogService.ShowError("Operace selhala", message);
+                    location.Name = location.Location!.Name;
                 }
             }
        
@@ -153,6 +147,62 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 parent?.Children.Remove(location);
             }
+        }
+
+        partial void OnSelectedHouseholdChanged(Household? value)
+        {
+            SelectedHouseholdChangedEvent?.Invoke(this, value);
+        }
+
+
+        [RelayCommand]
+        private void AddLocation()
+        {
+            var parent = SelectedLocation;
+
+            if (EditingNode is not null) return;
+
+            var sort = parent?.Children.Count ?? RootLocations.Count;
+            var draft = LocationNodeViewModel.CreateDraft(parent?.Id, sort);
+
+            if (parent is null)
+                RootLocations.Add(draft);
+            else
+            {
+                parent.IsExpanded = true;
+                parent.Children.Add(draft);
+            }
+
+            EditingNode = draft;
+            SelectedLocation = draft;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanManipulateLocation))]
+        private async Task DeleteLocation()
+        {
+            var result = _dialogService.ShowConfirmationDialog("Delete location", $"Are you sure you want to delete location {SelectedLocation!.Name}, all its sub-locations and all items?");
+            if (result == Enums.DialogResult.Yes)
+            {
+                try
+                {
+                    await _locations.DeleteAsync(SelectedLocation!.Id, new CancellationTokenSource().Token);
+                } catch (ApiException ex)
+                {
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogService.ShowError("Operace selhala", message);
+                } finally
+                {
+                    await LoadAsync(selectedHouseholdId, new CancellationTokenSource().Token);
+                }
+            }
+                
+        }
+
+        [RelayCommand(CanExecute = nameof(CanManipulateLocation))]
+        private async Task RenameLocation()
+        {
+            SelectedLocation!.IsEditing = true;
+            EditingNode = SelectedLocation;
         }
     }
 }

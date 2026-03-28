@@ -29,6 +29,12 @@ namespace HomeInventory.Infrastructure.Repositories
             }
         }
 
+        public async Task DeleteItemsFromLocationAsync(Guid locationId, CancellationToken ct = default)
+        {
+            _db.RemoveRange(_db.Items.Where(x => x.LocationId == locationId));
+            await _db.SaveChangesAsync(ct);
+        }
+
         public async Task<bool> ExistsAsync(Guid itemId, CancellationToken ct = default)
         {
             return (await _db.Items.FindAsync([itemId], ct)) != null;

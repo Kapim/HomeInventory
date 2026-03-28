@@ -36,5 +36,6 @@ namespace HomeInventory.Application.Interfaces
         public Task RemoveAsync(Location location, CancellationToken ct = default);
 
         public Task UpdateAsync(Location location, CancellationToken ct = default);
+        Task DeleteAsync(Location location, CancellationToken ct);
     }
 }

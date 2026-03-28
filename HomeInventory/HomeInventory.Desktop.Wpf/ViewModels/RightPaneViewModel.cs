@@ -22,15 +22,11 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly IDialogService _dialogs;
         private readonly IErrorLocalizer _errorLocalizer;
         private readonly INotificationsService _notifications;
+        private readonly IBusyService _busy;
         private LocationNodeViewModel? _location;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
         private bool addingNewItem = false;
-        [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
-        [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
-        [NotifyCanExecuteChangedFor(nameof(AddItemCommand))]
-        private bool isBusy = false;
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
         [NotifyCanExecuteChangedFor(nameof(MoveToLocationCommand))]
@@ -40,16 +36,17 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public event EventHandler? SelectNewLocationForItemsEvent;
 
 
-        private bool ItemsCanBeManipulated => !IsSelectingNewLocation && !IsBusy && selectedItems.Count > 0;
-        private bool ItemCanBeAdded => !IsSelectingNewLocation && !IsBusy;
+        private bool ItemsCanBeManipulated => !IsSelectingNewLocation && selectedItems.Count > 0;
+        private bool ItemCanBeAdded => !IsSelectingNewLocation;
 
-        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer, INotificationsService notifications)
+        public RightPaneViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer, INotificationsService notifications, IBusyService busyService)
         {
             _locations = locations;
             _items = items;
             _dialogs = dialogs;
             _errorLocalizer = errorLocalizer;
             _notifications = notifications;
+            _busy = busyService;
             selectedItems.CollectionChanged += SelectedItems_CollectionChanged;
         }
 
@@ -66,27 +63,26 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
         {
-            IsBusy = true;
-            Items.Clear();
-            selectedItems.Clear();
-            addingNewItem = false;
-            _location = location;
-            try
+            await _busy.Run(async () =>
             {
-                var items = await _locations.GetItemsAsync(location.Id, ct);
-                foreach (var item in items)
+                Items.Clear();
+                selectedItems.Clear();
+                addingNewItem = false;
+                _location = location;
+                try
                 {
-                    Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, ItemSelectedChanged, item));
+                    var items = await _locations.GetItemsAsync(location.Id, ct);
+                    foreach (var item in items)
+                    {
+                        Items.Add(new ItemViewModel(ItemNameChanged, ItemDescriptionChanged, ItemPlaceNoteChanged, ItemQuantityChanged, ItemSelectedChanged, item));
+                    }
                 }
-            }
-            catch (ApiException ex)
-            {
-                var message = _errorLocalizer.GetString(ex.Type);
-                _dialogs.ShowError("Operace selhala", message);
-            } finally
-            {
-                IsBusy = false;
-            }
+                catch (ApiException ex)
+                {
+                    var message = _errorLocalizer.GetString(ex.Type);
+                    _dialogs.ShowError("Operace selhala", message);
+                }
+            }); 
         }
 
         public void AddNewItem()
@@ -118,7 +114,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    var item = await RunBusy(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
+                    var item = await _busy.Run(() => _items.CreateAsync(new(newName, itemViewModel.Quantity, _location.Id, itemViewModel.PlacementNote, itemViewModel.Description), new CancellationTokenSource().Token));
                     itemViewModel.SetItem(item);
                     if (itemViewModel.IsSelected)
                         selectedItems.Add(itemViewModel);
@@ -146,7 +142,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 {
                     var request = new ItemUpdateRequest(newName, item.Description, item.Quantity, item.PlacementNote, item.LocationId);                   
                     
-                    var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                    var updatedItem = await _busy.Run(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
                     itemViewModel.SetItem(updatedItem);
                     ShowSaved();
                 }
@@ -176,7 +172,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var request = new ItemUpdateRequest(item.Name, newDescription, item.Quantity, item.PlacementNote, item.LocationId);
 
-                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await _busy.Run(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
                 itemViewModel.SetItem(updatedItem);
                 ShowSaved();
             }
@@ -205,7 +201,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
 
                 var request = new ItemUpdateRequest(item.Name, item.Description, item.Quantity, newPlaceNote, item.LocationId);
-                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await _busy.Run(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
                 itemViewModel.SetItem(updatedItem);
                 ShowSaved();
             }
@@ -232,7 +228,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var originalValue = item.Quantity;
                 var request = new ItemUpdateRequest(item.Name, item.Description, newQuantinty, item.PlacementNote, item.LocationId);
-                var updatedItem = await RunBusy(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
+                var updatedItem = await _busy.Run(() => _items.UpdateAsync(itemViewModel.Item!.Id, request, new CancellationTokenSource().Token));
                 itemViewModel.SetItem(updatedItem);
                 ShowSaved();
             }
@@ -257,18 +253,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 selectedItems.Remove(itemViewModel);
         }
 
-        private async Task<T> RunBusy<T>(Func<Task<T>> action)
-        {
-            if (IsBusy)
-                throw new InvalidOperationException("Operation already in progress");
-            try
-            {
-                IsBusy = true;
-                return await action();
-            } finally {
-                IsBusy = false;
-            }
-        }
 
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
         public async Task DeleteItem()
@@ -285,30 +269,33 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             if (_dialogs.ShowConfirmationDialog("Delete items", message) == DialogResult.Yes)
             {
-                IsBusy = true;
-                try
+                await _busy.Run(async () =>
                 {
+                    try
+                    {
 
-                    int failedToDeleteCount = 0;
-                    foreach (var itemVM in selectedItems)
-                        try
-                        {
-                            await _items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token);
-                        }
-                        catch (ApiException)
-                        {
-                            ++failedToDeleteCount;
-                        }
+                        int failedToDeleteCount = 0;
+                        foreach (var itemVM in selectedItems)
+                            try
+                            {
+                                await _items.DeleteAsync(itemVM.Item!.Id, new CancellationTokenSource().Token);
+                            }
+                            catch (ApiException)
+                            {
+                                ++failedToDeleteCount;
+                            }
 
-                    if (failedToDeleteCount > 0)
-                        _notifications.Warning($"Successfully deleted {itemsToDeleteCount - failedToDeleteCount} items out of {itemsToDeleteCount} selected items.");
-                    else
-                        _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
-                } finally
-                {
-                    await LoadAsync(_location!);
-                    IsBusy = false;
-                }
+                        if (failedToDeleteCount > 0)
+                            _notifications.Warning($"Successfully deleted {itemsToDeleteCount - failedToDeleteCount} items out of {itemsToDeleteCount} selected items.");
+                        else
+                            _notifications.Success($"Successfully deleted {itemsToDeleteCount} items.");
+                    }
+                    finally
+                    {
+                        await LoadAsync(_location!);
+                    }
+                });               
+                
             }
             
         }
@@ -333,37 +320,40 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             var itemsToMoveCount = selectedItems.Count;
             if (itemsToMoveCount == 0)
                 return;
-                        
-            IsBusy = true;
-            try
+
+            await _busy.Run(async () =>
             {
-                int failedToMoveCount = 0;
-                foreach (var itemVM in selectedItems)
+                try
                 {
-                    var item = itemVM.Item!;
-                    ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
-                    try
+                    int failedToMoveCount = 0;
+                    foreach (var itemVM in selectedItems)
                     {
-                        await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
+                        var item = itemVM.Item!;
+                        ItemUpdateRequest request = new(item.Name, item.Description, item.Quantity, item.PlacementNote, location.Id);
+                        try
+                        {
+                            await _items.UpdateAsync(itemVM.Item!.Id, request, new CancellationTokenSource().Token);
+                        }
+                        catch (ApiException)
+                        {
+                            ++failedToMoveCount;
+                        }
                     }
-                    catch (ApiException)
+                    if (failedToMoveCount > 0)
                     {
-                        ++failedToMoveCount;
+                        _notifications.Warning($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+                    }
+                    else
+                    {
+                        _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
                     }
                 }
-                if (failedToMoveCount > 0)
+                finally
                 {
-                    _notifications.Warning($"Successfully moved {itemsToMoveCount - failedToMoveCount} items out of {itemsToMoveCount} selected items.");
+                    await LoadAsync(location, new CancellationTokenSource().Token);
                 }
-                else
-                {
-                    _notifications.Success($"Successfully moved {itemsToMoveCount} items.");
-                }
-            } finally
-            {
-                await LoadAsync(location, new CancellationTokenSource().Token);
-                IsBusy = false;
-            }          
+            });
+            
 
 
         

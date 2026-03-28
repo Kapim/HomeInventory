@@ -52,5 +52,18 @@ namespace HomeInventory.Api.Controllers
         {
             return [.. (await _locations.GetItemsAsync(id, new CancellationTokenSource().Token)).Select(x => ItemMapping.Map(x))];
         }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteLocation(Guid id)
+        {
+            try
+            {
+                await _locations.DeleteLocation(id, new CancellationTokenSource().Token);
+                return Ok();
+            } catch (Exception ex) when (ex is KeyNotFoundException || ex is ArgumentException)
+            {
+                return NotFound();
+            }
+        }
     }
 }

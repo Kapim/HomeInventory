@@ -38,5 +38,9 @@ namespace HomeInventory.Application.Interfaces
         Task DeleteAsync(
             Guid itemId,
             CancellationToken ct = default);
+
+        Task DeleteItemsFromLocationAsync(
+            Guid locationId,
+            CancellationToken ct = default);
     }
 }

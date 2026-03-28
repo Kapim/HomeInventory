@@ -34,6 +34,13 @@ namespace HomeInventory.Client.Mapping
                 locationListItemDto.ParentLocationId,
                 locationListItemDto.SortOrder);
 
+        public static LocationListItem MapToListItem(Location location) =>
+            new(location.Id,
+                location.Name,
+                location.LocationType,
+                location.ParentLocationId,
+                location.SortOrder);
+
         public static UpdateLocationRequestDto Map(LocationUpdateRequest locationUpdateRequest) =>
             new(locationUpdateRequest.Name,
                 LocationTypeMapping.Map(locationUpdateRequest.LocationType),

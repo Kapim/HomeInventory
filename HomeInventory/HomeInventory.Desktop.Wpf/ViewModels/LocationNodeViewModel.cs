@@ -7,31 +7,46 @@ using System.Text;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class LocationNodeViewModel(Guid id, string name, Guid? parentId, int sortOrder) : ObservableObject
+    public partial class LocationNodeViewModel : ObservableObject
     {
-        public Guid Id { get; private set; } = id;
+        public LocationListItem? Location { get; private set; }
+        public Guid Id { get; private set; }
         [ObservableProperty]
-        private string name = name;
-        public Guid? ParentId { get; private set; } = parentId;
-        public int SortOrder { get; private set; } = sortOrder;
+        private string? name;
+        public Guid? ParentId { get; private set; }
+        public int? SortOrder { get; private set; }
         [ObservableProperty]
         private bool isEditing;
 
-        [ObservableProperty]
-        private bool isNew;
+        public bool IsNew => Location == null;
         [ObservableProperty]
         private bool shouldFocusName;
         [ObservableProperty]
         private bool isExpanded;
 
+        public LocationNodeViewModel(LocationListItem? location)
+        {
+            Location = location;
+            if (location != null)
+            {
+                Id = location.Id;
+                name = location.Name;
+                ParentId = location.ParentLocationId;
+                SortOrder = location.SortOrder;
+            } else
+            {
+                Id = Guid.Empty;
+            }
+        }
 
         public ObservableCollection<LocationNodeViewModel> Children { get; } = [];
 
         public static LocationNodeViewModel CreateDraft(Guid? parentId, int sortOrder)
-            => new(Guid.Empty, "", parentId, sortOrder) { IsNew = true, IsEditing = true, ShouldFocusName = true };
+            => new(null) { ParentId = parentId, SortOrder = sortOrder, IsEditing = true, ShouldFocusName = true };
 
-        public void FillData(Location location)
+        public void SetLocation(LocationListItem location)
         {
+            Location = location;
             Id = location.Id;
             Name = location.Name;
             SortOrder = location.SortOrder;

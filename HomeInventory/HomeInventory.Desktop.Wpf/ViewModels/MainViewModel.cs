@@ -18,7 +18,6 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 {
     public partial class MainViewModel : ObservableObject, IAsyncInitializable 
     {
-        public TopBarViewModel TopBar { get; } 
         public LocationTreeViewModel LocationTree { get; }
         public RightPaneViewModel RightPane { get; }
 
@@ -28,27 +27,36 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public ObservableCollection<Household> Households = [];
         private bool isSelectingNewLocationForItem = false;
 
+        private readonly IBusyService _busy;
+        public bool IsBusy => _busy.IsBusy;
+
         private readonly INotificationsService _notifications;
         public ISnackbarMessageQueue SnackbarMessageQueue => _notifications.SnackbarMessageQueue;
 
-        public MainViewModel(TopBarViewModel topBar,
+        public MainViewModel(
             LocationTreeViewModel locationTree,
             RightPaneViewModel rightPaneViewModel,
             IHouseholdsService householdsService,
             IErrorLocalizer errorLocalizer,
             IDialogService dialogService,
-            INotificationsService notifications)
+            INotificationsService notifications,
+            IBusyService busyService)
         {
-            TopBar = topBar;
             LocationTree = locationTree;
             RightPane = rightPaneViewModel;
             _householdsService = householdsService;
             _errorLocalizer = errorLocalizer;
             _dialogService = dialogService;
             _notifications = notifications;
+            _busy = busyService;
+            _busy.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(IBusyService.IsBusy))
+                    OnPropertyChanged(nameof(IsBusy));
+            };
+        
 
-            TopBar.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
-            TopBar.AddLocationEvent += TopBar_AddLocationEvent;
+            LocationTree.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             LocationTree.OnSelectedLocationChangedEvent += LocationTree_OnSelectedLocationChangeEvent;
             rightPaneViewModel.SelectNewLocationForItemsEvent += RightPaneViewModel_SelectNewLocationForItemsEvent;
 
@@ -59,11 +67,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             isSelectingNewLocationForItem = true;
         }
 
-        private void TopBar_AddLocationEvent(object? sender, EventArgs e)
-        {
-            LocationTree.AddLocation();
-        }
-
+     
         private async void LocationTree_OnSelectedLocationChangeEvent(object? sender, LocationNodeViewModel? location)
         {
             if (location != null)
@@ -86,8 +90,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 var h = await _householdsService.GetAllAsync(new CancellationTokenSource().Token);
                 Households = new ObservableCollection<Household>(h);
-                TopBar.Households = Households;
-                TopBar.SelectedHousehold = Households.FirstOrDefault();
+                LocationTree.Households = Households;
+                LocationTree.SelectedHousehold = Households.FirstOrDefault();
             } catch (ApiException ex)
             {
                 var message = _errorLocalizer.GetString(ex.Type);

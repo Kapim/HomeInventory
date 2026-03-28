@@ -50,5 +50,15 @@ namespace HomeInventory.Application.UseCases
             await _locations.AddAsync(location, ct);
             return location;
         }
+
+        public async Task DeleteLocation(Guid locationId, CancellationToken ct)
+        {
+            var locationChilds = await _locations.GetSubtreeAsync(locationId, true, ct);
+            foreach (var l in locationChilds)
+            {
+                await _items.DeleteItemsFromLocationAsync(l.Id, ct);
+                await _locations.DeleteAsync(l, ct);
+            }
+        }
     }
 }
