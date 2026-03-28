@@ -60,7 +60,7 @@ namespace HomeInventory.Api.Controllers
             {
                 await _locations.DeleteLocation(id, new CancellationTokenSource().Token);
                 return Ok();
-            } catch (KeyNotFoundException)
+            } catch (Exception ex) when (ex is KeyNotFoundException || ex is ArgumentException)
             {
                 return NotFound();
             }
