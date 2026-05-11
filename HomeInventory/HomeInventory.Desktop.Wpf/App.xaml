@@ -32,6 +32,12 @@
             <DataTemplate DataType="{x:Type vm:RightPaneViewModel}">
                 <views:RightPaneView />
             </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:LocationDetailViewModel}">
+                <views:LocationDetailView />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ItemsListViewModel}">
+                <views:ItemsListView />
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
