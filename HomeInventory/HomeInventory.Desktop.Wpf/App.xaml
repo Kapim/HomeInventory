@@ -9,11 +9,73 @@
         
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="DeepPurple" SecondaryColor="Lime" />
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="Indigo" SecondaryColor="Teal" />
 
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" />
 
             </ResourceDictionary.MergedDictionaries>
+
+            <Color x:Key="AppBackgroundColor">#F5F7FB</Color>
+            <Color x:Key="AppSurfaceColor">#FFFFFFFF</Color>
+            <Color x:Key="AppSurfaceMutedColor">#EEF3F8</Color>
+            <Color x:Key="AppBorderColor">#D8E0EA</Color>
+            <Color x:Key="AppTextColor">#172033</Color>
+            <Color x:Key="AppMutedTextColor">#667085</Color>
+            <Color x:Key="AppAccentColor">#0F766E</Color>
+
+            <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+            <SolidColorBrush x:Key="AppSurfaceBrush" Color="{StaticResource AppSurfaceColor}" />
+            <SolidColorBrush x:Key="AppSurfaceMutedBrush" Color="{StaticResource AppSurfaceMutedColor}" />
+            <SolidColorBrush x:Key="AppBorderBrush" Color="{StaticResource AppBorderColor}" />
+            <SolidColorBrush x:Key="AppTextBrush" Color="{StaticResource AppTextColor}" />
+            <SolidColorBrush x:Key="AppMutedTextBrush" Color="{StaticResource AppMutedTextColor}" />
+            <SolidColorBrush x:Key="AppAccentBrush" Color="{StaticResource AppAccentColor}" />
+
+            <Style x:Key="PageTitleText" TargetType="{x:Type TextBlock}">
+                <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="LineHeight" Value="28" />
+            </Style>
+
+            <Style x:Key="SectionTitleText" TargetType="{x:Type TextBlock}">
+                <Setter Property="Foreground" Value="{StaticResource AppTextBrush}" />
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="CaptionText" TargetType="{x:Type TextBlock}">
+                <Setter Property="Foreground" Value="{StaticResource AppMutedTextBrush}" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
+            <Style x:Key="IconToolButton" TargetType="{x:Type Button}">
+                <Setter Property="Width" Value="36" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="MinWidth" Value="36" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="6,0,0,0" />
+                <Setter Property="ToolTipService.InitialShowDelay" Value="350" />
+            </Style>
+
+            <Style x:Key="PrimaryActionButton" TargetType="{x:Type Button}">
+                <Setter Property="MinHeight" Value="38" />
+                <Setter Property="Padding" Value="16,0" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+
+            <Style x:Key="SoftPanelBorder" TargetType="{x:Type Border}">
+                <Setter Property="Background" Value="{StaticResource AppSurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="8" />
+            </Style>
+
+            <Style x:Key="OverlayPanel" TargetType="{x:Type Border}">
+                <Setter Property="Background" Value="#C8F5F7FB" />
+                <Setter Property="Panel.ZIndex" Value="10" />
+            </Style>
+
             <DataTemplate DataType="{x:Type vm:LoginViewModel}">
                     <views:LoginView />
             </DataTemplate>

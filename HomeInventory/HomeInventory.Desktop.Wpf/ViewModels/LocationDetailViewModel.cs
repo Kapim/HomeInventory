@@ -19,6 +19,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         private LocationNodeViewModel? _node;
         private Location? _location;
+        private bool _suppressAutoSave;
+        private readonly SemaphoreSlim _autoSaveGate = new(1, 1);
+        private int _autoSaveVersion;
 
         public IReadOnlyList<LocationType> LocationTypes { get; } = Enum.GetValues<LocationType>();
 
@@ -75,9 +78,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                     var location = await _locations.GetByIdAsync(node.Id, ct);
                     _node = node;
                     _location = location;
-                    Name = location.Name;
-                    SelectedLocationType = location.LocationType;
-                    Description = location.Description;
+                    SetFieldsFromLocation(location);
                     OnPropertyChanged(nameof(HasLocation));
                     SaveCommand.NotifyCanExecuteChanged();
                 }
@@ -94,9 +95,17 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             _node = null;
             _location = null;
-            Name = null;
-            Description = null;
-            SelectedLocationType = default;
+            _suppressAutoSave = true;
+            try
+            {
+                Name = null;
+                Description = null;
+                SelectedLocationType = default;
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
             OnPropertyChanged(nameof(HasLocation));
             SaveCommand.NotifyCanExecuteChanged();
         }
@@ -106,15 +115,15 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         [RelayCommand(CanExecute = nameof(CanSave))]
         private async Task Save()
+            => await SaveCore(CancellationToken.None);
+
+        private async Task SaveCore(CancellationToken ct)
         {
             if (_location is null || _node is null)
                 return;
 
             if (string.IsNullOrWhiteSpace(Name))
-            {
-                _dialogs.ShowError("Operace selhala", "Jmeno musi byt vyplneno!");
                 return;
-            }
 
             var request = new LocationUpdateRequest(
                 Name.Trim(),
@@ -127,13 +136,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 try
                 {
-                    var updated = await _locations.UpdateAsync(_location.Id, request, new CancellationTokenSource().Token);
+                    var updated = await _locations.UpdateAsync(_location.Id, request, ct);
                     _location = updated;
                     _node.SetLocation(LocationMapping.MapToListItem(updated));
-                    Name = updated.Name;
-                    SelectedLocationType = updated.LocationType;
-                    Description = updated.Description;
+                    SetFieldsFromLocation(updated);
                     _notifications.Success("Ulozeno");
+                }
+                catch (OperationCanceledException) when (ct.IsCancellationRequested)
+                {
                 }
                 catch (Exception ex) when (ex is ApiException || ex is InvalidOperationException)
                 {
@@ -143,6 +153,56 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                     _dialogs.ShowError("Operace selhala", message);
                 }
             });
+        }
+
+        partial void OnNameChanged(string? value)
+            => QueueAutoSave();
+
+        partial void OnSelectedLocationTypeChanged(LocationType value)
+            => QueueAutoSave();
+
+        partial void OnDescriptionChanged(string? value)
+            => QueueAutoSave();
+
+        private void QueueAutoSave()
+        {
+            if (_suppressAutoSave || !CanSave())
+                return;
+
+            var version = Interlocked.Increment(ref _autoSaveVersion);
+            _ = SaveLatestChangeAsync(version);
+        }
+
+        private async Task SaveLatestChangeAsync(int version)
+        {
+            await _autoSaveGate.WaitAsync();
+            try
+            {
+                if (version != _autoSaveVersion)
+                    return;
+
+                await SaveCore(CancellationToken.None);
+            }
+            finally
+            {
+                _autoSaveGate.Release();
+            }
+        }
+
+
+        private void SetFieldsFromLocation(Location location)
+        {
+            _suppressAutoSave = true;
+            try
+            {
+                Name = location.Name;
+                SelectedLocationType = location.LocationType;
+                Description = location.Description;
+            }
+            finally
+            {
+                _suppressAutoSave = false;
+            }
         }
     }
 }

@@ -13,43 +13,66 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <Style x:Key="NameTemplate" TargetType="{x:Type TextBox}">
             <Setter Property="MaxLength" Value="20" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style x:Key="DescPlaceNoteTemplate" TargetType="{x:Type TextBox}">
             <Setter Property="MaxLength" Value="100" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
     </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="30" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
+        <Grid Grid.Row="0" Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Command="{Binding AddItemCommand}" Margin="0,0,8,0" Grid.Column="1">
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Položky" Style="{StaticResource SectionTitleText}" />
+                <TextBlock Text="Upravujte názvy, počty a poznámky přímo v tabulce." Style="{StaticResource CaptionText}" Margin="0,3,0,0" />
+            </StackPanel>
+            <Button Command="{Binding AddItemCommand}" Grid.Column="1" Style="{StaticResource IconToolButton}" ToolTip="Přidat položku">
                 <materialDesign:PackIcon Kind="Add" Width="20" Height="20"/>
             </Button>
-            <Button Command="{Binding DeleteItemCommand}" Margin="0,0,8,0" Grid.Column="2">
+            <Button Command="{Binding DeleteItemCommand}" Grid.Column="2" Style="{StaticResource IconToolButton}" ToolTip="Smazat vybrané položky">
                 <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
             </Button>
-            <Button Command="{Binding MoveToLocationCommand}" Margin="0,0,8,0" Grid.Column="3">
+            <Button Command="{Binding MoveToLocationCommand}" Grid.Column="3" Style="{StaticResource IconToolButton}" ToolTip="Přesunout vybrané položky">
                 <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
             </Button>
         </Grid>
-        <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" SelectedItem="{Binding SelectedItem}" CanUserAddRows="False" x:Name="ItemsGrid" Loaded="DataGrid_Loaded" IsReadOnly="{Binding IsBusy}"  Grid.Row="1">
+        <DataGrid ItemsSource="{Binding Items}"
+                  AutoGenerateColumns="False"
+                  SelectedItem="{Binding SelectedItem}"
+                  CanUserAddRows="False"
+                  x:Name="ItemsGrid"
+                  Loaded="DataGrid_Loaded"
+                  IsReadOnly="{Binding IsBusy}"
+                  Grid.Row="1"
+                  HeadersVisibility="Column"
+                  RowHeight="44"
+                  ColumnHeaderHeight="42"
+                  GridLinesVisibility="None"
+                  BorderThickness="1"
+                  BorderBrush="{StaticResource AppBorderBrush}"
+                  Background="{StaticResource AppSurfaceBrush}"
+                  AlternatingRowBackground="{StaticResource AppSurfaceMutedBrush}"
+                  HorizontalGridLinesBrush="{StaticResource AppBorderBrush}"
+                  VerticalGridLinesBrush="{StaticResource AppBorderBrush}">
 
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsThreeState = "False"/>
+                <DataGridCheckBoxColumn Binding="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsThreeState = "False" Width="64" MinWidth="64"/>
 
-                <DataGridTextColumn EditingElementStyle="{StaticResource NameTemplate}" Header="Name" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTemplateColumn Header="Quantity">
+                <DataGridTextColumn EditingElementStyle="{StaticResource NameTemplate}" Header="Název" Binding="{Binding Name, UpdateSourceTrigger=LostFocus}" Width="2*" />
+                <DataGridTemplateColumn Header="Počet" Width="110">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Quantity}" />
+                            <TextBlock Text="{Binding Quantity}" VerticalAlignment="Center" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                     <DataGridTemplateColumn.CellEditingTemplate>
@@ -58,17 +81,17 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellEditingTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Placement Note" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" />
-                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Description" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" />
+                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Umístění" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" Width="2*" />
+                <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Popis" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="2*" />
             </DataGrid.Columns>
         </DataGrid>
 
-        <Border Background="#66FFFFFF"
-    Visibility="{Binding IsSelectingNewLocation, Converter={StaticResource BoolToVisibilityConverter}}"
-    Panel.ZIndex="10" Grid.Row="1">
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar Width="140" Height="6" IsIndeterminate="True"/>
-                <TextBlock Text="Vyber novou lokaci..." Margin="0,8,0,0" HorizontalAlignment="Center"/>
+        <Border Style="{StaticResource OverlayPanel}"
+                Visibility="{Binding IsSelectingNewLocation, Converter={StaticResource BoolToVisibilityConverter}}"
+                Grid.Row="1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="240">
+                <ProgressBar Height="6" IsIndeterminate="True"/>
+                <TextBlock Text="Vyberte cílovou lokaci..." Margin="0,12,0,0" HorizontalAlignment="Center" Style="{StaticResource CaptionText}"/>
             </StackPanel>
         </Border>
 

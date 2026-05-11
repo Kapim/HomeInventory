@@ -11,59 +11,57 @@
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
-    <Grid>
-        <DockPanel LastChildFill="True">
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Home Inventory" Style="{StaticResource PageTitleText}" />
+                <TextBlock Grid.Row="1"
+                           Text="Správa místností, úložných prostor a položek v domácnosti"
+                           Style="{StaticResource CaptionText}"
+                           Margin="0,4,0,0" />
+            </Grid>
 
-
-            <!-- MAIN CONTENT -->
-            <Grid>
+            <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <!-- LEFT: locations -->
-                    <ColumnDefinition Width="320" MinWidth="240" />
-                    <!-- splitter -->
-                    <ColumnDefinition Width="6" />
-                    <!-- RIGHT: items/editor/search -->
-                    <ColumnDefinition Width="*" MinWidth="420" />
+                    <ColumnDefinition Width="340" MinWidth="280" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" MinWidth="520" />
                 </Grid.ColumnDefinitions>
 
-                <!-- LEFT PANEL -->
-                <Border Grid.Column="0"
-                    Padding="10"
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                    BorderThickness="0,0,1,0">
-                    <!-- LocationTreeViewModel -> LocationTreeView přes DataTemplate -->
+                <Border Grid.Column="0" Style="{StaticResource SoftPanelBorder}" Padding="16">
                     <ContentControl Content="{Binding LocationTree}" />
                 </Border>
 
-                <!-- SPLITTER -->
                 <GridSplitter Grid.Column="1"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Stretch"
-                          ShowsPreview="True"
-                          ResizeBehavior="PreviousAndNext"
-                          ResizeDirection="Columns" />
+                              Width="12"
+                              Background="Transparent"
+                              HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              ShowsPreview="True"
+                              ResizeBehavior="PreviousAndNext"
+                              ResizeDirection="Columns" />
 
-                <!-- RIGHT PANEL -->
-                <Border Grid.Column="2"
-                    Padding="12">
-                    <!-- Tady můžeš přepínat obsah (Items list / Item editor / Search results) -->
+                <Border Grid.Column="2" Style="{StaticResource SoftPanelBorder}" Padding="18">
                     <ContentControl Content="{Binding RightPane}" />
                 </Border>
-
-
-
-                
-
             </Grid>
+        </Grid>
 
-        </DockPanel>
-        <Border Background="#66FFFFFF"
+        <Border Style="{StaticResource OverlayPanel}"
             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}"
-            Panel.ZIndex="10" Grid.Row="1"> 
-            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <ProgressBar Width="140" Height="6" IsIndeterminate="True"/>
-                <TextBlock Text="Ukládám..." Margin="0,8,0,0" HorizontalAlignment="Center"/>
+            Grid.Row="1">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Width="220">
+                <ProgressBar Height="6" IsIndeterminate="True"/>
+                <TextBlock Text="Ukládám..." Margin="0,12,0,0" HorizontalAlignment="Center" Style="{StaticResource CaptionText}"/>
             </StackPanel>
         </Border>
         <materialDesign:Snackbar
