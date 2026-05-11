@@ -58,7 +58,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             LocationTree.SelectedHouseholdChangedEvent += SetActiveHouseholdAsync;
             LocationTree.OnSelectedLocationChangedEvent += LocationTree_OnSelectedLocationChangeEvent;
-            rightPaneViewModel.SelectNewLocationForItemsEvent += RightPaneViewModel_SelectNewLocationForItemsEvent;
+            RightPane.ItemsList.SelectNewLocationForItemsEvent += RightPaneViewModel_SelectNewLocationForItemsEvent;
 
         }
 
@@ -74,13 +74,20 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 if (isSelectingNewLocationForItem)
                 {
-                    await RightPane.MoveSelectedItemsToLocation(location);
+                    await RightPane.ItemsList.MoveSelectedItemsToLocation(location);
+                    await RightPane.LocationDetail.LoadAsync(location, new CancellationTokenSource().Token);
                     isSelectingNewLocationForItem = false;
                 } else
                 {
-                    await RightPane.LoadAsync(location, new CancellationTokenSource().Token);
+                    await RightPane.LocationDetail.LoadAsync(location, new CancellationTokenSource().Token);
+                    await RightPane.ItemsList.LoadAsync(location, new CancellationTokenSource().Token);
                 }
                 
+            }
+            else
+            {
+                RightPane.LocationDetail.Clear();
+                RightPane.ItemsList.Clear();
             }
         }
 

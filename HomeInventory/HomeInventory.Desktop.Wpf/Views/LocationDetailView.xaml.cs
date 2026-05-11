@@ -3,11 +3,11 @@ using System.Windows.Controls;
 namespace HomeInventory.Desktop.Wpf.Views
 {
     /// <summary>
-    /// Interaction logic for RightPane.xaml
+    /// Interaction logic for LocationDetail.xaml
     /// </summary>
-    public partial class RightPaneView : UserControl
+    public partial class LocationDetailView : UserControl
     {
-        public RightPaneView()
+        public LocationDetailView()
         {
             InitializeComponent();
         }

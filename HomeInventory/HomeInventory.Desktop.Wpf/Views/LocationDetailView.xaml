@@ -1,0 +1,71 @@
+<UserControl x:Class="HomeInventory.Desktop.Wpf.Views.LocationDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:DesignHeight="180" d:DesignWidth="800">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+            BorderThickness="0,0,0,1"
+            Padding="0,0,0,12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="160"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Grid.ColumnSpan="3"
+                       Text="Detail lokace"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,8"/>
+
+            <TextBox Grid.Row="1"
+                     Grid.Column="0"
+                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                     MaxLength="60"
+                     Margin="0,0,8,8"
+                     VerticalContentAlignment="Center"
+                     materialDesign:HintAssist.Hint="Nazev"
+                     IsEnabled="{Binding HasLocation}"/>
+
+            <ComboBox Grid.Row="1"
+                      Grid.Column="1"
+                      ItemsSource="{Binding LocationTypes}"
+                      SelectedItem="{Binding SelectedLocationType}"
+                      Margin="0,0,8,8"
+                      materialDesign:HintAssist.Hint="Typ"
+                      IsEnabled="{Binding HasLocation}"/>
+
+            <Button Grid.Row="1"
+                    Grid.Column="2"
+                    Command="{Binding SaveCommand}"
+                    Margin="0,0,0,8"
+                    Padding="10,0">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ContentSave" Width="18" Height="18" Margin="0,0,6,0"/>
+                    <TextBlock Text="Ulozit"/>
+                </StackPanel>
+            </Button>
+
+            <TextBox Grid.Row="2"
+                     Grid.ColumnSpan="3"
+                     Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                     MaxLength="500"
+                     MinHeight="56"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     materialDesign:HintAssist.Hint="Popis"
+                     IsEnabled="{Binding HasLocation}"/>
+        </Grid>
+    </Border>
+</UserControl>

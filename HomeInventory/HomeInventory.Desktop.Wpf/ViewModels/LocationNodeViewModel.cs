@@ -49,6 +49,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             Location = location;
             Id = location.Id;
             Name = location.Name;
+            ParentId = location.ParentLocationId;
             SortOrder = location.SortOrder;
         }
     }

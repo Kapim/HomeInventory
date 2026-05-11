@@ -36,7 +36,8 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddTransient<LocationNodeViewModel>();
                     services.AddTransient<LocationTreeViewModel>();
                     services.AddTransient<RightPaneViewModel>();
-                    services.AddTransient<MainViewModel>();
+                    services.AddTransient<LocationDetailViewModel>();
+                    services.AddTransient<ItemsListViewModel>();
                     
 
                     services.AddSingleton<IDialogService, DialogService>();
