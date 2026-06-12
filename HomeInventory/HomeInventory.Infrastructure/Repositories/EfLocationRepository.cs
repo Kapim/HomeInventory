@@ -14,6 +14,9 @@ namespace HomeInventory.Infrastructure.Repositories
         private IQueryable<Location> GetChildrenQuery(Guid? parentId) =>
             _db.Locations.Where(x => x.ParentLocationId == parentId);
 
+        private IQueryable<Location> GetChildrenQuery(Guid householdId, Guid? parentId) =>
+            _db.Locations.Where(x => x.HouseholdId == householdId && x.ParentLocationId == parentId);
+
 
         private async Task<Location?> GetLocationAsync(Guid? locationId, CancellationToken ct = default) =>
             locationId is null ? null : await _db.Locations.FirstOrDefaultAsync(x => x.Id == locationId, ct);      
@@ -76,6 +79,17 @@ namespace HomeInventory.Infrastructure.Repositories
             if (types is { Length: > 0 })            
                 query = query.Where(x => types.Contains(x.LocationType));
             
+            return await query.ToListAsync(ct);
+        }
+
+        public async Task<IReadOnlyList<Location>> GetChildrenAsync(Guid householdId, Guid? parentid, IEnumerable<LocationType>? filter = null, CancellationToken ct = default)
+        {
+            var query = GetChildrenQuery(householdId, parentid);
+
+            var types = filter?.ToArray();
+            if (types is { Length: > 0 })
+                query = query.Where(x => types.Contains(x.LocationType));
+
             return await query.ToListAsync(ct);
         }
 

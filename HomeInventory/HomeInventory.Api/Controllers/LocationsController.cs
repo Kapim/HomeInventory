@@ -21,9 +21,47 @@ namespace HomeInventory.Api.Controllers
         }
 
         [HttpPatch("{id}")]
-        public async Task<LocationDto> UpdateLocation(Guid id, UpdateLocationRequestDto request)
+        public async Task<ActionResult<LocationDto>> UpdateLocation(Guid id, UpdateLocationRequestDto request)
         {
-            return LocationMapping.Map(await _locations.UpdateAsync(id, LocationMapping.Map(request), new CancellationTokenSource().Token));
+            try
+            {
+                var updated = await _locations.UpdateAsync(id, LocationMapping.Map(request), new CancellationTokenSource().Token);
+                return LocationMapping.Map(updated);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
+
+        [HttpPatch("{id}/move")]
+        public async Task<ActionResult<LocationDto>> MoveLocation(Guid id, MoveLocationRequestDto request)
+        {
+            try
+            {
+                var moved = await _locations.MoveAsync(id, LocationMapping.Map(request), new CancellationTokenSource().Token);
+                return LocationMapping.Map(moved);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpPost]

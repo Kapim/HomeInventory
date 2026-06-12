@@ -19,6 +19,8 @@ namespace HomeInventory.Application.Interfaces
          */
         public Task<IReadOnlyList<Location>> GetChildrenAsync(Guid? parentid, IEnumerable<LocationType>? filter = null, CancellationToken ct = default);
 
+        public Task<IReadOnlyList<Location>> GetChildrenAsync(Guid householdId, Guid? parentid, IEnumerable<LocationType>? filter = null, CancellationToken ct = default);
+
         public Task<Location> GetByIdAsync(Guid id, CancellationToken ct = default);
 
         public Task<bool> ExistsSiblingWithNameAsync(Guid? parentLocationId, string name, Guid? excludeLocationId = null, CancellationToken ct = default);

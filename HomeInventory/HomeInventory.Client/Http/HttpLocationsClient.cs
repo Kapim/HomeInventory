@@ -87,6 +87,31 @@ namespace HomeInventory.Client.Http
             }
         }
 
+        public async Task<LocationDto> MoveAsync(Guid id, MoveLocationRequestDto request, CancellationToken ct)
+        {
+            try
+            {
+                using var resp = await _http.PatchAsJsonAsync($"api/locations/{id}/move", request, ct);
+
+                if (!resp.IsSuccessStatusCode)
+                {
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                }
+
+                var result = await resp.Content.ReadFromJsonAsync<LocationDto>(ct);
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+        }
+
         public async Task<LocationDto> GetByIdAsync(Guid id, CancellationToken ct)
         {
             try

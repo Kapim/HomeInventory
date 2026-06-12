@@ -29,12 +29,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(DeleteLocationCommand))]
         [NotifyCanExecuteChangedFor(nameof(RenameLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(MoveLocationCommand))]
         private LocationNodeViewModel? selectedLocation;
         public EventHandler<LocationNodeViewModel?>? OnSelectedLocationChangedEvent;
 
         [ObservableProperty] 
         private LocationNodeViewModel? editingNode;
         private Guid selectedHouseholdId;
+        private LocationNodeViewModel? movingLocation;
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CancelMoveLocationCommand))]
+        [NotifyCanExecuteChangedFor(nameof(MoveLocationToRootCommand))]
+        private bool isMovingLocation;
 
         public event EventHandler<Household?>? SelectedHouseholdChangedEvent;
         [ObservableProperty]
@@ -43,6 +49,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         public Household? selectedHousehold;
 
         private bool CanManipulateLocation => SelectedLocation != null && !SelectedLocation.IsNew;
+        private bool CanFinishMove => IsMovingLocation && movingLocation is not null;
 
         public async Task LoadAsync(Guid householdId, CancellationToken ct)
         {
@@ -60,7 +67,10 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                         parent.Children.Add(location);
                     }
                 }
-                foreach (var root in Locations.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder))
+                foreach (var location in Locations)
+                    location.SortChildren();
+
+                foreach (var root in Locations.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ThenBy(n => n.Name))
                     RootLocations.Add(root);
 
                 SelectedLocation = Locations.Any() ? Locations[0] : null;                   
@@ -72,8 +82,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             }
             
         }
-        partial void OnSelectedLocationChanging(LocationNodeViewModel? value)
+        async partial void OnSelectedLocationChanged(LocationNodeViewModel? value)
         {
+            if (IsMovingLocation)
+            {
+                await CompleteMoveAsync(value);
+                return;
+            }
+
             OnSelectedLocationChangedEvent?.Invoke(this, value);
         }
        
@@ -203,6 +219,91 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             SelectedLocation!.IsEditing = true;
             EditingNode = SelectedLocation;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanManipulateLocation))]
+        private void MoveLocation()
+        {
+            movingLocation = SelectedLocation;
+            IsMovingLocation = true;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanFinishMove))]
+        private void CancelMoveLocation()
+        {
+            movingLocation = null;
+            IsMovingLocation = false;
+        }
+
+        [RelayCommand(CanExecute = nameof(CanFinishMove))]
+        private async Task MoveLocationToRoot()
+            => await MoveLocationToParentAsync(null);
+
+        private async Task CompleteMoveAsync(LocationNodeViewModel? target)
+        {
+            if (target is null || movingLocation is null)
+            {
+                CancelMoveLocation();
+                return;
+            }
+
+            if (target.Id == movingLocation.Id)
+            {
+                CancelMoveLocation();
+                OnSelectedLocationChangedEvent?.Invoke(this, target);
+                return;
+            }
+
+            if (movingLocation.ContainsDescendant(target.Id))
+            {
+                _dialogService.ShowError("Operace selhala", "Lokaci nelze přesunout do její vlastní podlokace.");
+                CancelMoveLocation();
+                OnSelectedLocationChangedEvent?.Invoke(this, movingLocation);
+                return;
+            }
+
+            await MoveLocationToParentAsync(target.Id);
+        }
+
+        private async Task MoveLocationToParentAsync(Guid? newParentId)
+        {
+            if (movingLocation is null)
+                return;
+
+            var movedLocationId = movingLocation.Id;
+            try
+            {
+                await _locations.MoveAsync(movedLocationId, newParentId, new CancellationTokenSource().Token);
+                movingLocation = null;
+                IsMovingLocation = false;
+                await LoadAsync(selectedHouseholdId, new CancellationTokenSource().Token);
+                if (_byId.TryGetValue(movedLocationId, out var moved))
+                {
+                    ExpandAncestors(moved);
+                    SelectedLocation = moved;
+                }
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogService.ShowError("Operace selhala", message);
+                CancelMoveLocation();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _dialogService.ShowError("Operace selhala", ex.Message);
+                CancelMoveLocation();
+            }
+        }
+
+        private void ExpandAncestors(LocationNodeViewModel location)
+        {
+            var parentId = location.ParentId;
+            while (parentId is Guid id && _byId.TryGetValue(id, out var parent))
+            {
+                parent.IsExpanded = true;
+                parentId = parent.ParentId;
+            }
         }
     }
 }

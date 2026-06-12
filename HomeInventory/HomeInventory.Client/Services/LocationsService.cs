@@ -37,9 +37,7 @@ namespace HomeInventory.Client.Services
 
         public async Task<Location> MoveAsync(Guid id, Guid? newParentId, CancellationToken ct)
         {
-            var location = await _apiClient.GetByIdAsync(id, ct);
-            var request = new UpdateLocationRequestDto(location.Name, location.LocationType, location.SortOrder, location.Description, newParentId);
-            return LocationMapping.Map(await _apiClient.UpdateAsync(id, request, ct));
+            return LocationMapping.Map(await _apiClient.MoveAsync(id, new MoveLocationRequestDto(newParentId), ct));
         }
 
         public async Task<Location> RenameAsync(Guid id, string newName, CancellationToken ct)

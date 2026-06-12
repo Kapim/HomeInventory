@@ -14,8 +14,12 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <Grid.Resources>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        </Grid.Resources>
 
         <TextBlock Grid.Row="0" Text="Lokace" Style="{StaticResource SectionTitleText}" Margin="0,0,0,10" />
 
@@ -33,7 +37,6 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Grid.Column="0"
                      Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
@@ -47,16 +50,51 @@
             <Button Command="{Binding DeleteLocationCommand}" Grid.Column="2" Style="{StaticResource IconToolButton}" ToolTip="Smazat lokaci">
                 <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
             </Button>
-            <!--Button Command="{Binding MoveToLocationCommand}" Margin="0,0,8,0" Grid.Column="3">
+            <Button Command="{Binding MoveLocationCommand}" Grid.Column="3" Style="{StaticResource IconToolButton}" ToolTip="Přesunout lokaci">
                 <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
-            </Button-->
-            <Button Command="{Binding RenameLocationCommand}" Grid.Column="4" Style="{StaticResource IconToolButton}" ToolTip="Přejmenovat lokaci">
-                <materialDesign:PackIcon Kind="Rename" Width="20" Height="20"/>
             </Button>
         </Grid>
+        <Border Grid.Row="3"
+                Background="{StaticResource AppSurfaceMutedBrush}"
+                BorderBrush="{StaticResource AppBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="8"
+                Margin="0,0,0,10"
+                Visibility="{Binding IsMovingLocation, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="Vyberte cílovou lokaci pro přesun."
+                           Style="{StaticResource CaptionText}"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"/>
+                <Button Grid.Column="1"
+                        Command="{Binding MoveLocationToRootCommand}"
+                        MinHeight="32"
+                        Padding="10,0"
+                        Margin="8,0,0,0"
+                        ToolTip="Přesunout do kořene">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="FileTree" Width="18" Height="18" Margin="0,0,6,0"/>
+                        <TextBlock Text="Do kořene"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2"
+                        Command="{Binding CancelMoveLocationCommand}"
+                        Style="{StaticResource IconToolButton}"
+                        ToolTip="Zrušit přesun">
+                    <materialDesign:PackIcon Kind="Close" Width="20" Height="20"/>
+                </Button>
+            </Grid>
+        </Border>
         <TreeView ItemsSource="{Binding RootLocations}"
                   SelectedItemChanged="TreeView_SelectedItemChanged"
-                  Grid.Row="3"
+                  Grid.Row="4"
                   BorderThickness="0"
                   Background="Transparent"
                   Padding="0,2,0,0">

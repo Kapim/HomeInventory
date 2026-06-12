@@ -12,6 +12,7 @@ namespace HomeInventory.Client.Services.Interfaces
     {
         Task<LocationDto> GetByIdAsync(Guid id, CancellationToken ct);
         Task<LocationDto> UpdateAsync(Guid id, UpdateLocationRequestDto request, CancellationToken ct);
+        Task<LocationDto> MoveAsync(Guid id, MoveLocationRequestDto request, CancellationToken ct);
         Task DeleteAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<ItemDto>> GetItemsAsync(Guid locationId, CancellationToken ct);
         Task<LocationDto> CreateAsync(CreateLocationRequestDto request, CancellationToken ct);

@@ -34,8 +34,13 @@ namespace HomeInventory.Wpf.Tests
             return Task.FromResult((IReadOnlyList<Item>)filtered);
         }
 
+        public List<(Guid Id, Guid? NewParentId)> MoveCalls { get; } = [];
+
         public Task<Location> MoveAsync(Guid id, Guid? newParentId, CancellationToken ct)
-            => throw new NotImplementedException();
+        {
+            MoveCalls.Add((id, newParentId));
+            return Task.FromResult(new Location(id, "moved", LocationType.Other, newParentId, Guid.NewGuid(), Guid.NewGuid(), 0, null));
+        }
 
         public Task<Location> RenameAsync(Guid id, string newName, CancellationToken ct)
             => throw new NotImplementedException();

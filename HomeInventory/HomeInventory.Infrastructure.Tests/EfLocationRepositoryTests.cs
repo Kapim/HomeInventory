@@ -116,6 +116,26 @@ namespace HomeInventory.Infrastructure.Tests
         }
 
         [Fact]
+        public async Task GetChildren_WithHousehold_ReturnsOnlyChildrenInHousehold()
+        {
+            var (_, repo) = CreateSut();
+            var otherHouseholdId = Guid.NewGuid();
+
+            var parent = CreateLocation("Parent");
+            await repo.AddAsync(parent);
+
+            var child = CreateLocation("Child", parent.Id);
+            var otherHouseholdRoot = new Location("OtherRoot", otherHouseholdId, _ownerId);
+            await repo.AddAsync(child);
+            await repo.AddAsync(otherHouseholdRoot);
+
+            var children = await repo.GetChildrenAsync(_householdId, null);
+
+            Assert.Single(children);
+            Assert.Equal(parent.Id, children[0].Id);
+        }
+
+        [Fact]
         public async Task GetChildren_Filter_ReturnsOnlyMatchingTypes()
         {
             var (_, repo) = CreateSut();
