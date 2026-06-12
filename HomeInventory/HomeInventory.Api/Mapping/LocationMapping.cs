@@ -31,6 +31,9 @@ namespace HomeInventory.Api.Mapping
                 request.SortOrder,
                 request.Description);
 
+        public static LocationMoveRequest Map(MoveLocationRequestDto request) =>
+            new(request.NewParentLocationId, request.SortOrder);
+
         public static LocationCreateRequest Map(CreateLocationRequestDto request, Guid ownerId) =>
             new(request.Name,
                 LocationTypeMapping.Map(request.LocationType),

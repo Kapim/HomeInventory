@@ -114,12 +114,29 @@ namespace HomeInventory.Client.Tests
         }
 
         [Fact]
+        public async Task MoveAsync_CallsMoveEndpoint_AndReturnsLocation()
+        {
+            var locationId = Guid.NewGuid();
+            var newParentId = Guid.NewGuid();
+            var expected = new LocationDto(locationId, "Box", LocationTypeDto.Container, newParentId, Guid.NewGuid(), Guid.NewGuid(), 0, null);
+
+            var api = new MockHomeInventoryApi();
+            api.MapJson(HttpMethod.Patch, $"api/locations/{locationId}/move", expected);
+
+            var client = new HttpLocationsClient(api.CreateClient());
+            var result = await client.MoveAsync(locationId, new MoveLocationRequestDto(newParentId), CancellationToken.None);
+
+            Assert.Equal(expected, result);
+            Assert.Contains($"PATCH api/locations/{locationId}/move", api.Requests);
+        }
+
+        [Fact]
         public async Task UpdateAsync_NotExistingId_ThrowsNotFoundApiException()
         {
             var locationId = Guid.NewGuid();
 
             var api = new MockHomeInventoryApi();
-            api.MapStatus(HttpMethod.Put, $"api/locations/{locationId}", HttpStatusCode.NotFound);
+            api.MapStatus(HttpMethod.Patch, $"api/locations/{locationId}", HttpStatusCode.NotFound);
             UpdateLocationRequestDto dto = new("NewName", LocationTypeDto.Room, 0, null, Guid.NewGuid());
 
             var client = new HttpLocationsClient(api.CreateClient());

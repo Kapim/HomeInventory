@@ -15,6 +15,7 @@ namespace HomeInventory.Application.UseCases
 
         public Task<IReadOnlyList<Location>> SearchAsync(string name, Guid? withinParentId = null, int limit = 50, CancellationToken ct = default);
         public Task<Location> UpdateAsync(Guid id, LocationUpdateRequest request, CancellationToken ct);
+        public Task<Location> MoveAsync(Guid id, LocationMoveRequest request, CancellationToken ct);
         public Task<IReadOnlyList<Item>> GetItemsAsync(Guid locationId, CancellationToken ct);
         public Task DeleteLocation(Guid locationId, CancellationToken ct);
     }

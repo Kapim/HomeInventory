@@ -52,5 +52,19 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             ParentId = location.ParentLocationId;
             SortOrder = location.SortOrder;
         }
+
+        public bool ContainsDescendant(Guid locationId)
+            => Children.Any(child => child.Id == locationId || child.ContainsDescendant(locationId));
+
+        public void SortChildren()
+        {
+            var ordered = Children.OrderBy(x => x.SortOrder).ThenBy(x => x.Name).ToList();
+            Children.Clear();
+            foreach (var child in ordered)
+            {
+                child.SortChildren();
+                Children.Add(child);
+            }
+        }
     }
 }
