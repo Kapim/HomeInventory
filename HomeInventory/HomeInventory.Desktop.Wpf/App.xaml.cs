@@ -40,6 +40,7 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddTransient<ItemsListViewModel>();
                     
 
+                    services.AddSingleton<IPendingNavigationService, PendingNavigationService>();
                     services.AddSingleton<IDialogService, DialogService>();
                     services.AddSingleton<INavigationService, NavigationService>();
                     services.AddSingleton<IErrorLocalizer, ErrorLocalizerService>();

@@ -6,6 +6,8 @@ namespace HomeInventory.Wpf.Tests
     public class MockHouseholdsService : IHouseholdsService
     {
         private readonly List<LocationListItem> _locations = [];
+        private readonly List<Item> _items = [];
+        private readonly List<Household> _households = [];
 
         public void SetLocations(IEnumerable<LocationListItem> locations)
         {
@@ -13,19 +15,30 @@ namespace HomeInventory.Wpf.Tests
             _locations.AddRange(locations);
         }
 
+        public void SetItems(IEnumerable<Item> items)
+        {
+            _items.Clear();
+            _items.AddRange(items);
+        }
+
+        public void AddHousehold(Household household)
+        {
+            _households.Add(household);
+        }
+
         public Task<IReadOnlyList<LocationListItem>> GetLocationsAsync(Guid householdId, CancellationToken ct)
             => Task.FromResult<IReadOnlyList<LocationListItem>>(_locations);
 
-        public Task<Household> GetByIdAsync(Guid householdId, CancellationToken ct)
-            => throw new NotImplementedException();
-
         public Task<IReadOnlyList<Household>> GetAllAsync(CancellationToken ct)
-            => throw new NotImplementedException();
+            => Task.FromResult<IReadOnlyList<Household>>(_households);
+
+        public Task<Household> GetByIdAsync(Guid householdId, CancellationToken ct)
+            => Task.FromResult(_households.First(h => h.Id == householdId));
 
         public Task<Household> CreateAsync(string name, CancellationToken ct)
             => throw new NotImplementedException();
 
         public Task<IReadOnlyList<Item>> GetItemsAsync(Guid householdId, CancellationToken ct)
-            => throw new NotImplementedException();
+            => Task.FromResult<IReadOnlyList<Item>>(_items);
     }
 }

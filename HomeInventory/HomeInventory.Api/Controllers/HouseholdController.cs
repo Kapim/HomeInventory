@@ -3,8 +3,6 @@ using HomeInventory.Application.UseCases;
 using HomeInventory.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections;
-using System.Security.Authentication;
 
 namespace HomeInventory.Api.Controllers
 {
@@ -38,7 +36,13 @@ namespace HomeInventory.Api.Controllers
         {
             return [.. (await _households.GetLocationsAsync(Guid.Parse(id))).Select(x => LocationMapping.MapListItem(x))];
         }
+
+        [HttpGet("{id}/items")]
+        public async Task<List<ItemDto>> GetItems(string id)
+        {
+            return [.. (await _households.GetItemsAsync(Guid.Parse(id))).Select(x => ItemMapping.Map(x))];
+        }
     }
 
-    
+
 }

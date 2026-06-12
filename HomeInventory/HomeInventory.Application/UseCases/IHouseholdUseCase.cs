@@ -9,5 +9,6 @@ namespace HomeInventory.Application.UseCases
         public Task AddHouseholdAsync(string name);
         public Task<IReadOnlyList<Household>> GetHouseholdsAsync();
         Task<IReadOnlyList<Location>> GetLocationsAsync(Guid householdId);
+        Task<IReadOnlyList<Item>> GetItemsAsync(Guid householdId);
     }
 }

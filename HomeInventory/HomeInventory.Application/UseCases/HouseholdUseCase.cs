@@ -2,10 +2,11 @@
 using HomeInventory.Domain;
 
 namespace HomeInventory.Application.UseCases
-{ 
-    public class HouseholdUseCase(IHouseholdRepository households) : IHouseholdUseCase
+{
+    public class HouseholdUseCase(IHouseholdRepository households, IItemRepository items) : IHouseholdUseCase
     {
         private readonly IHouseholdRepository _households = households;
+        private readonly IItemRepository _items = items;
 
         public async Task AddHouseholdAsync(string name)
         {
@@ -25,6 +26,15 @@ namespace HomeInventory.Application.UseCases
         public async Task<IReadOnlyList<Location>> GetLocationsAsync(Guid householdId)
         {
             return await _households.GetLocationsAsync(householdId, new CancellationTokenSource().Token);
+        }
+
+        public async Task<IReadOnlyList<Item>> GetItemsAsync(Guid householdId)
+        {
+            var locations = await _households.GetLocationsAsync(householdId, new CancellationTokenSource().Token);
+            var result = new List<Item>();
+            foreach (var loc in locations)
+                result.AddRange(await _items.GetByLocationAsync(loc.Id, new CancellationTokenSource().Token));
+            return result;
         }
     }
 }

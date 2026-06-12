@@ -19,15 +19,22 @@
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0" Margin="0,0,0,18">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0" Text="Home Inventory" Style="{StaticResource PageTitleText}" />
-                <TextBlock Grid.Row="1"
-                           Text="Správa místností, úložných prostor a položek v domácnosti"
-                           Style="{StaticResource CaptionText}"
-                           Margin="0,4,0,0" />
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Home Inventory" Style="{StaticResource PageTitleText}" />
+                    <TextBlock Text="Správa místností, úložných prostor a položek v domácnosti"
+                               Style="{StaticResource CaptionText}"
+                               Margin="0,4,0,0" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="🔍 Hledat"
+                        Command="{Binding GoToSearchCommand}"
+                        VerticalAlignment="Center"
+                        MinHeight="38"
+                        Padding="14,0" />
             </Grid>
 
             <Grid Grid.Row="1">

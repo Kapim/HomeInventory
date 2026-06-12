@@ -7,7 +7,7 @@ using HomeInventory.Wpf.Tests;
 
 namespace HomeInventory.Desktop.Wpf.Tests
 {
-    public class RightPaneViewModelTests
+    public class ItemsListViewModelTests
     {
         private static async Task WaitUntilAsync(Func<bool> condition, int timeoutMs = 1500, int pollMs = 20)
         {
@@ -20,11 +20,14 @@ namespace HomeInventory.Desktop.Wpf.Tests
             throw new TimeoutException("Expected state was not reached in time.");
         }
 
+        private static LocationNodeViewModel MakeLocation(Guid id, string name = "location")
+            => new(new LocationListItem(id, name, LocationType.Other, null, 0));
+
         [Fact]
         public async Task CreateNewItem_AddsNewItemAndBindsId()
         {
-            var vm = CreateRightPaneVM(out var _, out var _);
-            await vm.LoadAsync(new(Guid.NewGuid(), "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var _);
+            await vm.LoadAsync(MakeLocation(Guid.NewGuid()), TestContext.Current.CancellationToken);
             vm.AddNewItem();
             Assert.NotEmpty(vm.Items);
             var item = vm.Items[0];
@@ -40,8 +43,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
         [Fact]
         public async Task CreateNewItem_ThenUpdateWorks()
         {
-            var vm = CreateRightPaneVM(out var _, out var _);
-            await vm.LoadAsync(new(Guid.NewGuid(), "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var _);
+            await vm.LoadAsync(MakeLocation(Guid.NewGuid()), TestContext.Current.CancellationToken);
             vm.AddNewItem();
             var item = vm.Items[0];
             item.Name = "NewName";
@@ -56,8 +59,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
         [InlineData("     ")]
         public async Task CreateNewItem_InvalidName_ShowsErrorDataRemains(string? name)
         {
-            var vm = CreateRightPaneVM(out var _, out var mockDialogService);
-            await vm.LoadAsync(new(Guid.NewGuid(), "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var mockDialogService);
+            await vm.LoadAsync(MakeLocation(Guid.NewGuid()), TestContext.Current.CancellationToken);
             vm.AddNewItem();
             var item = vm.Items[0];
             item.Description = "desc";
@@ -81,8 +84,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
                 Guid.NewGuid(),
                 Guid.NewGuid()};
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var _, out var _, guids, locationId);
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var _, guids, locationId);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             var item = vm.Items.FirstOrDefault(x => x.Item?.Id == guids[0]);
             Assert.NotNull(item);
             string newName = "NewName";
@@ -107,8 +110,8 @@ namespace HomeInventory.Desktop.Wpf.Tests
         public async Task UpdateNewItemInfoBeforeCreated()
         {
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var _, out var _);
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var _);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             vm.AddNewItem();
             Assert.NotEmpty(vm.Items);
             var item = vm.Items[0];
@@ -132,27 +135,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         }
 
         [Fact]
-        public async Task CreateNewItem_IsBusy_DontCreateNewItem()
-        {
-            var locationId = Guid.NewGuid();
-            var guids = new List<Guid> {
-                Guid.NewGuid()};
-            var vm = CreateRightPaneVM(out var _, out var mockDialogService, guids, locationId);
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
-            Assert.NotEmpty(vm.Items);
-            var item = vm.Items[0];
-            vm.IsBusy = true;
-            item.Name = "NewName";
-            await WaitUntilAsync(() => mockDialogService.Messages.Count != 0);
-            Assert.Equal("name", item.Item!.Name);
-            Assert.Single(mockDialogService.Messages);
-        }
-
-        [Fact]
         public async Task AddNewItem_CalledTwice_DontAddNewItemShowsError()
         {
-            var vm = CreateRightPaneVM(out var _, out var mockDialogService);
-            await vm.LoadAsync(new(Guid.NewGuid(), "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var mockDialogService);
+            await vm.LoadAsync(MakeLocation(Guid.NewGuid()), TestContext.Current.CancellationToken);
             vm.AddNewItem();
             vm.AddNewItem();
             Assert.Single(mockDialogService.Messages);
@@ -164,10 +150,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var guids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogService, guids, locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogService, guids, locationId);
             mockDialogService.NextConfirmationResult = DialogResult.Yes;
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             vm.Items[0].IsSelected = true;
             vm.Items[1].IsSelected = true;
             await WaitUntilAsync(() => vm.DeleteItemCommand.CanExecute(null));
@@ -186,10 +172,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var guids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogService, guids, locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogService, guids, locationId);
             mockDialogService.NextConfirmationResult = DialogResult.No;
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             vm.Items[0].IsSelected = true;
             await WaitUntilAsync(() => vm.DeleteItemCommand.CanExecute(null));
 
@@ -206,11 +192,11 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var guids = new List<Guid> { Guid.NewGuid() };
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var _, out var _, guids, locationId);
+            var vm = CreateVM(out var _, out var _, guids, locationId);
             var eventRaised = false;
             vm.SelectNewLocationForItemsEvent += (_, __) => eventRaised = true;
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             vm.Items[0].IsSelected = true;
             await WaitUntilAsync(() => vm.MoveToLocationCommand.CanExecute(null));
 
@@ -226,14 +212,14 @@ namespace HomeInventory.Desktop.Wpf.Tests
             var guids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
             var sourceLocationId = Guid.NewGuid();
             var targetLocationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var _, guids, sourceLocationId);
-            await vm.LoadAsync(new(sourceLocationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var mockItemsService, out var _, guids, sourceLocationId);
+            await vm.LoadAsync(MakeLocation(sourceLocationId), TestContext.Current.CancellationToken);
 
             vm.Items[0].IsSelected = true;
             vm.Items[2].IsSelected = true;
             await WaitUntilAsync(() => vm.MoveToLocationCommand.CanExecute(null));
 
-            await vm.MoveSelectedItemsToLocation(new(targetLocationId, "target", null, 0));
+            await vm.MoveSelectedItemsToLocation(MakeLocation(targetLocationId, "target"));
 
             Assert.Equal(targetLocationId, mockItemsService.GetLocal(guids[0])!.LocationId);
             Assert.Equal(sourceLocationId, mockItemsService.GetLocal(guids[1])!.LocationId);
@@ -247,10 +233,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         public async Task MoveSelectedItemsToLocation_NoSelection_FinishGracefully()
         {
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var _, out var _);
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            var vm = CreateVM(out var _, out var _);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
 
-            await vm.MoveSelectedItemsToLocation(new(Guid.NewGuid(), "target", null, 0));
+            await vm.MoveSelectedItemsToLocation(MakeLocation(Guid.NewGuid(), "target"));
         }
 
         [Fact]
@@ -258,9 +244,9 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var ids = new List<Guid> { Guid.NewGuid() };
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var _, out var _, out var mockLocationsService, out var _, ids, locationId);
+            var vm = CreateVM(out var _, out var _, out var mockLocationsService, out var _, ids, locationId);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
 
             var itemVm = vm.Items.Single();
@@ -275,11 +261,11 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogService, out var mockLocationsService, out var mockNotificationsService, ids, locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogService, out var mockLocationsService, out var mockNotificationsService, ids, locationId);
             mockDialogService.NextConfirmationResult = DialogResult.Yes;
             mockItemsService.FailDeleteFor(ids[1]);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
 
             vm.Items[0].IsSelected = true;
@@ -297,16 +283,16 @@ namespace HomeInventory.Desktop.Wpf.Tests
             var ids = new List<Guid> { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
             var sourceLocationId = Guid.NewGuid();
             var targetLocationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var _, out var mockLocationsService, out var mockNotificationsService, ids, sourceLocationId);
+            var vm = CreateVM(out var mockItemsService, out var _, out var mockLocationsService, out var mockNotificationsService, ids, sourceLocationId);
             mockItemsService.FailUpdateFor(ids[2]);
 
-            await vm.LoadAsync(new(sourceLocationId, "source", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(sourceLocationId, "source"), TestContext.Current.CancellationToken);
             Assert.Equal(1, mockLocationsService.GetItemsAsyncCalls);
 
             vm.Items[0].IsSelected = true;
             vm.Items[2].IsSelected = true;
 
-            await vm.MoveSelectedItemsToLocation(new(targetLocationId, "target", null, 0));
+            await vm.MoveSelectedItemsToLocation(MakeLocation(targetLocationId, "target"));
 
             Assert.Equal(2, mockLocationsService.GetItemsAsyncCalls);
             Assert.Equal(1, mockNotificationsService.WarningCalls);
@@ -317,10 +303,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var id = Guid.NewGuid();
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogs, [id], locationId);
             mockItemsService.FailUpdateFor(id);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             var itemVm = vm.Items.Single();
             var original = itemVm.Name;
 
@@ -336,10 +322,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var id = Guid.NewGuid();
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogs, [id], locationId);
             mockItemsService.FailUpdateFor(id);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             var itemVm = vm.Items.Single();
             var original = itemVm.Description;
 
@@ -355,10 +341,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var id = Guid.NewGuid();
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogs, [id], locationId);
             mockItemsService.FailUpdateFor(id);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             var itemVm = vm.Items.Single();
             var original = itemVm.PlacementNote;
 
@@ -374,10 +360,10 @@ namespace HomeInventory.Desktop.Wpf.Tests
         {
             var id = Guid.NewGuid();
             var locationId = Guid.NewGuid();
-            var vm = CreateRightPaneVM(out var mockItemsService, out var mockDialogs, [id], locationId);
+            var vm = CreateVM(out var mockItemsService, out var mockDialogs, [id], locationId);
             mockItemsService.FailUpdateFor(id);
 
-            await vm.LoadAsync(new(locationId, "location", null, 0), TestContext.Current.CancellationToken);
+            await vm.LoadAsync(MakeLocation(locationId), TestContext.Current.CancellationToken);
             var itemVm = vm.Items.Single();
             var original = itemVm.Quantity;
 
@@ -388,14 +374,14 @@ namespace HomeInventory.Desktop.Wpf.Tests
             Assert.Equal(original, itemVm.Item!.Quantity);
         }
 
-        private static RightPaneViewModel CreateRightPaneVM(
+        private static ItemsListViewModel CreateVM(
             out MockItemsService mockItemsService,
             out MockDialogService mockDialogService,
             List<Guid>? guids = null,
             Guid? locationId = null)
-            => CreateRightPaneVM(out mockItemsService, out mockDialogService, out _, out _, guids, locationId);
+            => CreateVM(out mockItemsService, out mockDialogService, out _, out _, guids, locationId);
 
-        private static RightPaneViewModel CreateRightPaneVM(
+        private static ItemsListViewModel CreateVM(
             out MockItemsService mockItemsService,
             out MockDialogService mockDialogService,
             out MockLocationsService mockLocationsService,
@@ -408,12 +394,13 @@ namespace HomeInventory.Desktop.Wpf.Tests
             mockDialogService = new MockDialogService();
             mockNotificationsService = new MockNotificationsService();
 
-            var vm = new RightPaneViewModel(
+            var vm = new ItemsListViewModel(
                 mockLocationsService,
                 mockItemsService,
                 mockDialogService,
                 new ErrorLocalizerService(),
-                mockNotificationsService);
+                mockNotificationsService,
+                new MockBusyService());
 
             if (guids != null && locationId != null)
             {

@@ -73,7 +73,14 @@ namespace HomeInventory.Api.Controllers
             }
         }
 
-        
+        [HttpGet("search")]
+        public async Task<ActionResult<IReadOnlyList<ItemDto>>> SearchItems([FromQuery] string name)
+        {
+            var results = await _items.SearchAsync(name, new CancellationTokenSource().Token);
+            return Ok(results.Select(ItemMapping.Map).ToList());
+        }
+
+
     }
 
     

@@ -305,5 +305,14 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 parentId = parent.ParentId;
             }
         }
+
+        public void SelectById(Guid locationId)
+        {
+            if (_byId.TryGetValue(locationId, out var node))
+            {
+                ExpandAncestors(node);
+                SelectedLocation = node;
+            }
+        }
     }
 }
