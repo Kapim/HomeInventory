@@ -22,6 +22,16 @@ public partial class LocationNodeViewModel : ObservableObject
     public bool IsNew => Location is null;
     public bool HasChildren => Children.Count > 0;
     public string ChevronText => IsExpanded ? "▾" : "▸";
+    public string TypeIcon => Location?.LocationType switch
+    {
+        LocationType.Room      => "🚪",
+        LocationType.Furniture => "🪑",
+        LocationType.Zone      => "📍",
+        LocationType.Container => "📦",
+        LocationType.Drawer    => "🗂️",
+        LocationType.Shelf     => "📚",
+        _                      => "📁",
+    };
 
     public ObservableCollection<LocationNodeViewModel> Children { get; } = [];
 
@@ -49,6 +59,7 @@ public partial class LocationNodeViewModel : ObservableObject
         Name = location.Name;
         ParentId = location.ParentLocationId;
         SortOrder = location.SortOrder;
+        OnPropertyChanged(nameof(TypeIcon));
     }
 
     public bool ContainsDescendant(Guid locationId)
