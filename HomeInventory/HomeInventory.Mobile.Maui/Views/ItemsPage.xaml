@@ -6,76 +6,139 @@
     xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
     xmlns:vm="clr-namespace:HomeInventory.Mobile.Maui.ViewModels"
     x:DataType="vm:ItemsViewModel"
-    Title="{Binding LocationName}">
+    Title="{Binding LocationName}"
+    BackgroundColor="{AppThemeBinding Light=#F4F4F8, Dark=#111118}">
 
     <Shell.ToolbarItems>
         <ToolbarItem Text="+ Přidat" Command="{Binding AddItemCommand}" />
+        <ToolbarItem Text="Přesunout" Command="{Binding MoveItemCommand}" Order="Secondary" />
         <ToolbarItem Text="Smazat vybrané" Command="{Binding DeleteItemCommand}" Order="Secondary" />
     </Shell.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,*">
-        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
-                           HorizontalOptions="Center" Margin="0,4" />
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
 
-        <CollectionView Grid.Row="1"
+        <!-- Offline banner -->
+        <Border Grid.Row="0"
+                BackgroundColor="#EF4444"
+                StrokeShape="RoundRectangle 0"
+                Stroke="Transparent"
+                Padding="16,8"
+                IsVisible="{Binding IsOffline}">
+            <Label Text="⚠️  Offline — změny nebudou uloženy"
+                   TextColor="White"
+                   FontSize="13"
+                   HorizontalOptions="Center" />
+        </Border>
+
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           Margin="0,8" />
+
+        <!-- Selection hint — shown only when items are selected -->
+        <Label Grid.Row="2"
+               Text="{Binding HasSelectedItems, StringFormat='Vybrány položky — použijte Přesunout nebo Smazat'}"
+               IsVisible="{Binding HasSelectedItems}"
+               FontSize="12"
+               TextColor="{AppThemeBinding Light=#512BD4, Dark=#ac99ea}"
+               HorizontalOptions="Center"
+               Margin="0,4" />
+
+        <CollectionView Grid.Row="3"
                         ItemsSource="{Binding Items}"
-                        SelectionMode="Single"
-                        SelectedItem="{Binding SelectedItem}"
-                        Margin="8">
+                        SelectionMode="None"
+                        Margin="12,4,12,0">
+
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ItemViewModel">
-                    <Border Margin="4,4"
-                            Padding="12"
-                            BackgroundColor="{AppThemeBinding Light=#FAFAFA, Dark=#242424}"
-                            StrokeShape="RoundRectangle 10"
-                            Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#444}">
-                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                    <Border Margin="0,4"
+                            BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1C1C2E}"
+                            StrokeShape="RoundRectangle 12"
+                            Stroke="{AppThemeBinding Light=#E4E4EE, Dark=#2A2A40}"
+                            StrokeThickness="1"
+                            Padding="12">
 
-                            <!-- Name (editable) -->
-                            <Entry Grid.Row="0" Grid.Column="0"
-                                   Text="{Binding Name}"
-                                   Placeholder="Název položky"
-                                   FontSize="16" FontAttributes="Bold"
-                                   ReturnType="Next" />
+                        <Grid ColumnDefinitions="*,Auto">
 
-                            <!-- Quantity -->
-                            <HorizontalStackLayout Grid.Row="0" Grid.Column="1"
-                                                   Spacing="4" VerticalOptions="Center">
-                                <Label Text="Qty:" FontSize="12" TextColor="Gray" VerticalOptions="Center" />
-                                <Entry Text="{Binding Quantity}"
-                                       WidthRequest="50"
-                                       HorizontalTextAlignment="Center"
-                                       Keyboard="Numeric"
-                                       FontSize="14" />
-                            </HorizontalStackLayout>
+                            <!-- Main content -->
+                            <Grid Grid.Column="0"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  RowSpacing="4">
 
-                            <!-- Description -->
-                            <Entry Grid.Row="1" Grid.ColumnSpan="2"
-                                   Text="{Binding Description}"
-                                   Placeholder="Popis (volitelné)"
-                                   FontSize="13"
-                                   TextColor="Gray" />
+                                <!-- Name -->
+                                <Entry Grid.Row="0" Grid.Column="0"
+                                       Text="{Binding Name}"
+                                       Placeholder="Název položky"
+                                       FontSize="15"
+                                       FontAttributes="Bold"
+                                       ReturnType="Next" />
 
-                            <!-- Placement note -->
-                            <Entry Grid.Row="2" Grid.ColumnSpan="2"
-                                   Text="{Binding PlacementNote}"
-                                   Placeholder="Umístění (volitelné)"
-                                   FontSize="13"
-                                   TextColor="Gray" />
+                                <!-- Quantity -->
+                                <HorizontalStackLayout Grid.Row="0" Grid.Column="1"
+                                                       Spacing="4"
+                                                       VerticalOptions="Center"
+                                                       Margin="8,0,0,0">
+                                    <Label Text="ks:"
+                                           FontSize="12"
+                                           TextColor="{AppThemeBinding Light=#888, Dark=#888}"
+                                           VerticalOptions="Center" />
+                                    <Entry Text="{Binding Quantity}"
+                                           WidthRequest="48"
+                                           HorizontalTextAlignment="Center"
+                                           Keyboard="Numeric"
+                                           FontSize="14" />
+                                </HorizontalStackLayout>
+
+                                <!-- Description -->
+                                <Entry Grid.Row="1" Grid.ColumnSpan="2"
+                                       Text="{Binding Description}"
+                                       Placeholder="Popis (volitelné)"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+                                <!-- Placement note -->
+                                <Entry Grid.Row="2" Grid.ColumnSpan="2"
+                                       Text="{Binding PlacementNote}"
+                                       Placeholder="Umístění (volitelné)"
+                                       FontSize="13"
+                                       TextColor="{AppThemeBinding Light=#666, Dark=#AAA}" />
+
+                            </Grid>
+
+                            <!-- Select checkbox -->
+                            <CheckBox Grid.Column="1"
+                                      IsChecked="{Binding IsSelected}"
+                                      VerticalOptions="Center"
+                                      Margin="8,0,0,0" />
+
                         </Grid>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
 
             <CollectionView.EmptyView>
-                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="12" Margin="32">
-                    <Label Text="Žádné položky" FontSize="18" TextColor="Gray" HorizontalOptions="Center" />
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center"
+                                     Spacing="14" Margin="40">
+                    <Label Text="📦"
+                           FontSize="48"
+                           HorizontalOptions="Center" />
+                    <Label Text="Žádné položky"
+                           FontSize="18"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#444, Dark=#AAA}"
+                           HorizontalOptions="Center" />
                     <Label Text="Přidejte první položku tlačítkem +"
-                           FontSize="14" TextColor="Gray" HorizontalOptions="Center"
+                           FontSize="13"
+                           TextColor="{AppThemeBinding Light=#888, Dark=#666}"
+                           HorizontalOptions="Center"
                            HorizontalTextAlignment="Center" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
+
         </CollectionView>
+
     </Grid>
 
 </views:BasePage>

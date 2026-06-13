@@ -15,11 +15,14 @@ public partial class ItemsViewModel : ObservableObject
     public ObservableCollection<ItemViewModel> Items { get; } = [];
 
     private readonly ObservableCollection<ItemViewModel> _selectedItems = [];
+    private readonly IHouseholdsService _householdsService;
     private readonly ILocationsService _locations;
     private readonly IItemsService _items;
     private readonly IDialogService _dialogs;
     private readonly IErrorLocalizer _errorLocalizer;
     private readonly INotificationsService _notifications;
+    private readonly IConnectivityService _connectivity;
+    private readonly ISessionState _session;
 
     private Guid _locationId;
 
@@ -28,6 +31,7 @@ public partial class ItemsViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(DeleteItemCommand))]
+    [NotifyCanExecuteChangedFor(nameof(MoveItemCommand))]
     private bool hasSelectedItems;
 
     [ObservableProperty]
@@ -36,20 +40,33 @@ public partial class ItemsViewModel : ObservableObject
     [ObservableProperty]
     private string locationName = "";
 
+    public bool IsOffline => !_connectivity.IsOnline;
+
     public ItemsViewModel(
+        IHouseholdsService householdsService,
         ILocationsService locations,
         IItemsService items,
         IDialogService dialogs,
         IErrorLocalizer errorLocalizer,
-        INotificationsService notifications)
+        INotificationsService notifications,
+        IConnectivityService connectivity,
+        ISessionState session)
     {
+        _householdsService = householdsService;
         _locations = locations;
         _items = items;
         _dialogs = dialogs;
         _errorLocalizer = errorLocalizer;
         _notifications = notifications;
+        _connectivity = connectivity;
+        _session = session;
         _selectedItems.CollectionChanged += (_, _) =>
             HasSelectedItems = _selectedItems.Count > 0;
+        _connectivity.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IConnectivityService.IsOnline))
+                OnPropertyChanged(nameof(IsOffline));
+        };
     }
 
     public async Task LoadByIdAsync(Guid locationId, string locationName, CancellationToken ct = default)
@@ -121,6 +138,70 @@ public partial class ItemsViewModel : ObservableObject
                 _notifications.Warning($"Smazáno {count - failed} z {count} položek.");
             else
                 _notifications.Success($"Smazáno {count} položek.");
+
+            await ReloadAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(HasSelectedItems))]
+    private async Task MoveItem()
+    {
+        if (_session.SelectedHouseholdId is null) return;
+
+        IReadOnlyList<LocationListItem> locations;
+        try
+        {
+            locations = await _householdsService.GetLocationsAsync(_session.SelectedHouseholdId.Value, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _dialogs.ShowError("Operace selhala", GetMessage(ex));
+            return;
+        }
+
+        if (locations.Count == 0)
+        {
+            _dialogs.ShowError("Chyba", "Žádné dostupné lokace.");
+            return;
+        }
+
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return;
+
+        var locationNames = locations.Select(l => l.Name).ToArray();
+        var chosen = await page.DisplayActionSheetAsync("Přesunout do lokace", "Zrušit", null, locationNames);
+        if (chosen is null || chosen == "Zrušit") return;
+
+        var target = locations.FirstOrDefault(l => l.Name == chosen);
+        if (target is null) return;
+
+        var toMove = _selectedItems.Where(vm => !vm.IsNew && vm.Item is not null).ToList();
+        if (toMove.Count == 0) return;
+
+        IsBusy = true;
+        int failed = 0;
+        try
+        {
+            foreach (var vm in toMove)
+            {
+                var item = vm.Item!;
+                try
+                {
+                    await _items.UpdateAsync(item.Id,
+                        new ItemUpdateRequest(item.Name, item.Description, item.Quantity, item.PlacementNote, target.Id),
+                        CancellationToken.None);
+                }
+                catch (ApiException) { failed++; }
+            }
+
+            if (failed > 0)
+                _notifications.Warning($"Přesunuto {toMove.Count - failed} z {toMove.Count} položek.");
+            else
+                _notifications.Success($"Přesunuto {toMove.Count} položek do '{target.Name}'.");
 
             await ReloadAsync();
         }

@@ -13,18 +13,46 @@ using System.Collections.ObjectModel;
 
 namespace HomeInventory.Mobile.Maui.ViewModels;
 
-public partial class LocationsViewModel(
-    IHouseholdsService householdsService,
-    ILocationsService locationsService,
-    IAuthService auth,
-    INavigationService nav,
-    IDialogService dialogs,
-    IErrorLocalizer errorLocalizer,
-    ISessionState session) : ObservableObject, IAsyncInitializable
+public partial class LocationsViewModel : ObservableObject, IAsyncInitializable
 {
+    private readonly IHouseholdsService householdsService;
+    private readonly ILocationsService locationsService;
+    private readonly IAuthService auth;
+    private readonly INavigationService nav;
+    private readonly IDialogService dialogs;
+    private readonly IErrorLocalizer errorLocalizer;
+    private readonly ISessionState session;
+    private readonly IConnectivityService connectivity;
+
+    public LocationsViewModel(
+        IHouseholdsService householdsService,
+        ILocationsService locationsService,
+        IAuthService auth,
+        INavigationService nav,
+        IDialogService dialogs,
+        IErrorLocalizer errorLocalizer,
+        ISessionState session,
+        IConnectivityService connectivity)
+    {
+        this.householdsService = householdsService;
+        this.locationsService = locationsService;
+        this.auth = auth;
+        this.nav = nav;
+        this.dialogs = dialogs;
+        this.errorLocalizer = errorLocalizer;
+        this.session = session;
+        this.connectivity = connectivity;
+        connectivity.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IConnectivityService.IsOnline))
+                OnPropertyChanged(nameof(IsOffline));
+        };
+    }
+
     public ObservableCollection<LocationNodeViewModel> FlatLocations { get; } = [];
 
     public string? HouseholdName => session.SelectedHouseholdName;
+    public bool IsOffline => !connectivity.IsOnline;
 
     private Dictionary<Guid, LocationNodeViewModel> _byId = [];
     private Guid? _loadedHouseholdId;

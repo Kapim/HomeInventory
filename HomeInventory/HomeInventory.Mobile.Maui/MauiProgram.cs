@@ -31,6 +31,7 @@ public static class MauiProgram
         services.AddSingleton<IDialogService, MauiDialogService>();
         services.AddSingleton<IBusyService, BusyService>();
         services.AddSingleton<INotificationsService, MauiNotificationsService>();
+        services.AddSingleton<IConnectivityService, MauiConnectivityService>();
         services.AddSingleton<ITokenStore, SecureStorageTokenStore>();
         services.AddSingleton<IErrorLocalizer, ErrorLocalizerService>();
 

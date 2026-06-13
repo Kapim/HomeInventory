@@ -14,11 +14,24 @@
         <ToolbarItem Text="Odhlásit" Command="{Binding LogoutCommand}" Order="Secondary" />
     </Shell.ToolbarItems>
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*"
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
           BackgroundColor="{AppThemeBinding Light=#F4F4F8, Dark=#111118}">
 
-        <!-- Household chip -->
+        <!-- Offline banner -->
         <Border Grid.Row="0"
+                BackgroundColor="#EF4444"
+                StrokeShape="RoundRectangle 0"
+                Stroke="Transparent"
+                Padding="16,8"
+                IsVisible="{Binding IsOffline}">
+            <Label Text="⚠️  Offline — změny nebudou uloženy"
+                   TextColor="White"
+                   FontSize="13"
+                   HorizontalOptions="Center" />
+        </Border>
+
+        <!-- Household chip -->
+        <Border Grid.Row="1"
                 IsVisible="{Binding HouseholdName, Converter={StaticResource StringToBool}}"
                 BackgroundColor="{AppThemeBinding Light=#EEF0FF, Dark=#1E1E35}"
                 StrokeShape="RoundRectangle 20"
@@ -32,14 +45,14 @@
                    TextColor="{AppThemeBinding Light=#512BD4, Dark=#ac99ea}" />
         </Border>
 
-        <ActivityIndicator Grid.Row="1"
+        <ActivityIndicator Grid.Row="2"
                            IsRunning="{Binding IsBusy}"
                            IsVisible="{Binding IsBusy}"
                            HorizontalOptions="Center"
                            Margin="0,8" />
 
         <!-- Move mode banner -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="3"
                 BackgroundColor="#FF9800"
                 StrokeShape="RoundRectangle 0"
                 Stroke="Transparent"
@@ -61,7 +74,7 @@
             </Grid>
         </Border>
 
-        <CollectionView Grid.Row="3"
+        <CollectionView Grid.Row="4"
                         ItemsSource="{Binding FlatLocations}"
                         SelectionMode="None"
                         Margin="0,4,0,0">
