@@ -7,6 +7,7 @@ using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Mobile.Maui.Services;
+using HomeInventory.Mobile.Maui.Services.Navigation;
 using ClientLocation = HomeInventory.Client.Models.Location;
 
 namespace HomeInventory.Mobile.Maui.ViewModels;
@@ -14,6 +15,7 @@ namespace HomeInventory.Mobile.Maui.ViewModels;
 public partial class LocationDetailViewModel : ObservableObject
 {
     private readonly ILocationsService _locations;
+    private readonly INavigationService _nav;
     private readonly IDialogService _dialogs;
     private readonly IErrorLocalizer _errorLocalizer;
     private readonly INotificationsService _notifications;
@@ -32,24 +34,29 @@ public partial class LocationDetailViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveAndGoBackCommand))]
     private string? name;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveAndGoBackCommand))]
     private LocationType selectedLocationType;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveAndGoBackCommand))]
     private string? description;
 
     public LocationDetailViewModel(
         ILocationsService locations,
+        INavigationService nav,
         IDialogService dialogs,
         IErrorLocalizer errorLocalizer,
         INotificationsService notifications,
         IBusyService busy)
     {
         _locations = locations;
+        _nav = nav;
         _dialogs = dialogs;
         _errorLocalizer = errorLocalizer;
         _notifications = notifications;
@@ -60,6 +67,7 @@ public partial class LocationDetailViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(IsBusy));
                 SaveCommand.NotifyCanExecuteChanged();
+                SaveAndGoBackCommand.NotifyCanExecuteChanged();
             }
         };
     }
@@ -83,6 +91,7 @@ public partial class LocationDetailViewModel : ObservableObject
                 SetFieldsFromLocation(location);
                 OnPropertyChanged(nameof(HasLocation));
                 SaveCommand.NotifyCanExecuteChanged();
+                SaveAndGoBackCommand.NotifyCanExecuteChanged();
             }
             catch (ApiException ex)
             {
@@ -110,6 +119,7 @@ public partial class LocationDetailViewModel : ObservableObject
         }
         OnPropertyChanged(nameof(HasLocation));
         SaveCommand.NotifyCanExecuteChanged();
+        SaveAndGoBackCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanSave()
@@ -118,6 +128,13 @@ public partial class LocationDetailViewModel : ObservableObject
     [RelayCommand(CanExecute = nameof(CanSave))]
     private async Task Save()
         => await SaveCore(CancellationToken.None);
+
+    [RelayCommand(CanExecute = nameof(CanSave))]
+    private async Task SaveAndGoBack()
+    {
+        await SaveCore(CancellationToken.None);
+        await _nav.NavigateBack();
+    }
 
     private async Task SaveCore(CancellationToken ct)
     {

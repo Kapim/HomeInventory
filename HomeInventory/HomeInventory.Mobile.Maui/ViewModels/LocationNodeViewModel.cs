@@ -13,12 +13,15 @@ public partial class LocationNodeViewModel : ObservableObject
     private string? name;
 
     [ObservableProperty]
-    private bool isExpanded;
+    [NotifyPropertyChangedFor(nameof(ChevronText))]
+    private bool isExpanded = false;
 
     public Guid? ParentId { get; private set; }
     public int? SortOrder { get; private set; }
     public int Depth { get; set; }
     public bool IsNew => Location is null;
+    public bool HasChildren => Children.Count > 0;
+    public string ChevronText => IsExpanded ? "▾" : "▸";
 
     public ObservableCollection<LocationNodeViewModel> Children { get; } = [];
 

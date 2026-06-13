@@ -52,6 +52,7 @@ public static class MauiProgram
         services.AddSingleton<LocationsPage>();
         services.AddSingleton<ItemsSearchPage>();
         services.AddTransient<ItemsPage>();
+        services.AddTransient<LocationDetailPage>();
 
 #if DEBUG
         builder.Logging.AddDebug();

@@ -18,6 +18,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("login", typeof(LoginPage));
         Routing.RegisterRoute("households", typeof(HouseholdsPage));
         Routing.RegisterRoute("items", typeof(ItemsPage));
+        Routing.RegisterRoute("locationdetail", typeof(LocationDetailPage));
 
         Loaded += OnShellLoaded;
     }

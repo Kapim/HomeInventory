@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HomeInventory.Client;
+using HomeInventory.Client.Auth;
 using HomeInventory.Client.Errors;
 using HomeInventory.Client.Mapping;
 using HomeInventory.Client.Models;
@@ -15,6 +16,7 @@ namespace HomeInventory.Mobile.Maui.ViewModels;
 public partial class LocationsViewModel(
     IHouseholdsService householdsService,
     ILocationsService locationsService,
+    IAuthService auth,
     INavigationService nav,
     IDialogService dialogs,
     IErrorLocalizer errorLocalizer,
@@ -28,10 +30,6 @@ public partial class LocationsViewModel(
     private Guid? _loadedHouseholdId;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RenameLocationCommand))]
-    [NotifyCanExecuteChangedFor(nameof(DeleteLocationCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AddChildLocationCommand))]
-    [NotifyCanExecuteChangedFor(nameof(StartMoveLocationCommand))]
     private LocationNodeViewModel? selectedLocation;
 
     [ObservableProperty]
@@ -41,8 +39,6 @@ public partial class LocationsViewModel(
     private bool isMovingLocation;
 
     private LocationNodeViewModel? _movingLocation;
-
-    private bool CanManipulateSelected => SelectedLocation is not null && !SelectedLocation.IsNew;
 
     public async Task InitializeAsync(CancellationToken ct = default)
     {
@@ -108,8 +104,51 @@ public partial class LocationsViewModel(
     {
         node.Depth = depth;
         FlatLocations.Add(node);
-        foreach (var child in node.Children)
-            AppendFlat(child, depth + 1);
+        if (node.IsExpanded)
+            foreach (var child in node.Children)
+                AppendFlat(child, depth + 1);
+    }
+
+    private void RebuildFlat()
+    {
+        FlatLocations.Clear();
+        var roots = _byId.Values.Where(n => n.ParentId is null).OrderBy(n => n.SortOrder).ThenBy(n => n.Name);
+        foreach (var root in roots)
+            AppendFlat(root, 0);
+    }
+
+    [RelayCommand]
+    private void ToggleExpand(LocationNodeViewModel node)
+    {
+        node.IsExpanded = !node.IsExpanded;
+        var index = FlatLocations.IndexOf(node);
+        if (index < 0) return;
+
+        if (node.IsExpanded)
+            InsertSubtree(node, index + 1);
+        else
+            RemoveSubtree(node);
+    }
+
+    private int InsertSubtree(LocationNodeViewModel parent, int insertAt)
+    {
+        foreach (var child in parent.Children)
+        {
+            child.Depth = parent.Depth + 1;
+            FlatLocations.Insert(insertAt++, child);
+            if (child.IsExpanded)
+                insertAt = InsertSubtree(child, insertAt);
+        }
+        return insertAt;
+    }
+
+    private void RemoveSubtree(LocationNodeViewModel parent)
+    {
+        foreach (var child in parent.Children)
+        {
+            RemoveSubtree(child);
+            FlatLocations.Remove(child);
+        }
     }
 
     private void SelectLocation(Guid locationId)
@@ -125,11 +164,28 @@ public partial class LocationsViewModel(
         _loadedHouseholdId = session.SelectedHouseholdId;
     }
 
+    // Primary tap on a location card — routes based on current mode
+    [RelayCommand]
+    private async Task HandleTap(LocationNodeViewModel node)
+    {
+        SelectedLocation = node;
+        if (IsMovingLocation)
+            await CompleteMoveLocation(node);
+        else
+            await OpenLocation(node);
+    }
+
     [RelayCommand]
     private async Task OpenLocation(LocationNodeViewModel location)
     {
-        SelectedLocation = location;
         await Shell.Current.GoToAsync($"items?locationId={location.Id}&locationName={Uri.EscapeDataString(location.Name ?? "")}");
+    }
+
+    [RelayCommand]
+    private async Task OpenLocationDetail(LocationNodeViewModel node)
+    {
+        SelectedLocation = node;
+        await Shell.Current.GoToAsync("locationdetail", new Dictionary<string, object> { ["node"] = node });
     }
 
     [RelayCommand]
@@ -158,10 +214,10 @@ public partial class LocationsViewModel(
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanManipulateSelected))]
-    private async Task AddChildLocation()
+    [RelayCommand]
+    private async Task AddChildLocationNode(LocationNodeViewModel parent)
     {
-        if (session.SelectedHouseholdId is null || SelectedLocation is null) return;
+        if (session.SelectedHouseholdId is null) return;
 
         var name = await PromptNameAsync("Nová podzložka", "Zadejte název:");
         if (string.IsNullOrWhiteSpace(name)) return;
@@ -169,7 +225,7 @@ public partial class LocationsViewModel(
         try
         {
             await locationsService.CreateLocationAsync(
-                new LocationCreateRequest(name, LocationType.Other, SelectedLocation.Id, SelectedLocation.Children.Count, null, session.SelectedHouseholdId.Value),
+                new LocationCreateRequest(name, LocationType.Other, parent.Id, parent.Children.Count, null, session.SelectedHouseholdId.Value),
                 CancellationToken.None);
             await RefreshAsync();
         }
@@ -179,38 +235,17 @@ public partial class LocationsViewModel(
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanManipulateSelected))]
-    private async Task RenameLocation()
+    [RelayCommand]
+    private async Task DeleteLocationNode(LocationNodeViewModel node)
     {
-        if (SelectedLocation is null) return;
-
-        var name = await PromptNameAsync("Přejmenovat", "Nový název:", SelectedLocation.Name);
-        if (string.IsNullOrWhiteSpace(name) || name == SelectedLocation.Name) return;
-
-        try
-        {
-            var updated = await locationsService.RenameAsync(SelectedLocation.Id, name, CancellationToken.None);
-            SelectedLocation.SetLocation(LocationMapping.MapToListItem(updated));
-        }
-        catch (Exception ex)
-        {
-            dialogs.ShowError("Operace selhala", ex is ApiException apiEx ? errorLocalizer.GetString(apiEx.Type) : ex.Message);
-        }
-    }
-
-    [RelayCommand(CanExecute = nameof(CanManipulateSelected))]
-    private async Task DeleteLocation()
-    {
-        if (SelectedLocation is null) return;
-
         if (!await dialogs.ShowConfirmationDialog("Smazat lokaci",
-            $"Opravdu smazat '{SelectedLocation.Name}' včetně podlokací a položek?"))
+            $"Opravdu smazat '{node.Name}' včetně podlokací a položek?"))
             return;
 
         try
         {
-            await locationsService.DeleteAsync(SelectedLocation.Id, CancellationToken.None);
-            SelectedLocation = null;
+            await locationsService.DeleteAsync(node.Id, CancellationToken.None);
+            if (SelectedLocation == node) SelectedLocation = null;
             await RefreshAsync();
         }
         catch (Exception ex)
@@ -219,10 +254,11 @@ public partial class LocationsViewModel(
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanManipulateSelected))]
-    private void StartMoveLocation()
+    [RelayCommand]
+    private void StartMoveLocationNode(LocationNodeViewModel node)
     {
-        _movingLocation = SelectedLocation;
+        SelectedLocation = node;
+        _movingLocation = node;
         IsMovingLocation = true;
     }
 
@@ -263,9 +299,6 @@ public partial class LocationsViewModel(
     }
 
     [RelayCommand]
-    private async Task GoToSearch() => await nav.NavigateTo<ItemsSearchViewModel>();
-
-    [RelayCommand]
     private async Task SwitchHousehold()
     {
         _loadedHouseholdId = null;
@@ -275,6 +308,7 @@ public partial class LocationsViewModel(
     [RelayCommand]
     private async Task Logout()
     {
+        await auth.LogoutAsync();
         session.SelectedHouseholdId = null;
         _loadedHouseholdId = null;
         await nav.NavigateTo<LoginViewModel>();
