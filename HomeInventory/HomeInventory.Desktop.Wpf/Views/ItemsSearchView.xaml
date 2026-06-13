@@ -83,6 +83,15 @@
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
                                 <TextBlock Text="{Binding LocationPath}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
+                                <Border CornerRadius="4" Padding="5,1" Margin="0,3,0,0"
+                                        HorizontalAlignment="Left"
+                                        Background="#8B5CF6">
+                                    <Border.Visibility>
+                                        <Binding Path="TagMatch" Converter="{StaticResource NullToVisConverter}" />
+                                    </Border.Visibility>
+                                    <TextBlock FontSize="10" Foreground="White"
+                                               Text="{Binding TagMatch, StringFormat='🏷️ {0}'}" />
+                                </Border>
                             </StackPanel>
                         </Grid>
                     </DataTemplate>

@@ -12,7 +12,6 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <conv:HexColorConverter x:Key="HexColor"/>
         <Style x:Key="NameTemplate" TargetType="{x:Type TextBox}">
             <Setter Property="MaxLength" Value="20" />
             <Setter Property="VerticalContentAlignment" Value="Center" />

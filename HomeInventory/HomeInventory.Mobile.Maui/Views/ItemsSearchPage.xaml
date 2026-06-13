@@ -39,8 +39,8 @@
                                 Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ItemsSearchViewModel}}, Path=SelectResultCommand}"
                                 CommandParameter="{Binding .}" />
                         </Border.GestureRecognizers>
-                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
-                            <Label Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                            <Label Grid.Row="0" Grid.RowSpan="3" Grid.Column="0"
                                    Text="{Binding Icon}"
                                    FontSize="24"
                                    VerticalOptions="Center"
@@ -54,6 +54,18 @@
                                    FontSize="12"
                                    TextColor="Gray"
                                    IsVisible="{Binding LocationPath, Converter={StaticResource StringToBool}}" />
+                            <Border Grid.Row="2" Grid.Column="1"
+                                    BackgroundColor="#8B5CF6"
+                                    StrokeShape="RoundRectangle 4"
+                                    Stroke="Transparent"
+                                    Padding="5,2"
+                                    Margin="0,3,0,0"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding HasTagMatch}">
+                                <Label Text="{Binding TagMatch, StringFormat='🏷️ {0}'}"
+                                       FontSize="11"
+                                       TextColor="White" />
+                            </Border>
                         </Grid>
                     </Border>
                 </DataTemplate>

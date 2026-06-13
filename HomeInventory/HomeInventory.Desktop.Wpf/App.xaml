@@ -4,7 +4,8 @@
              xmlns:local="clr-namespace:HomeInventory.Desktop.Wpf"
              xmlns:vm="clr-namespace:HomeInventory.Desktop.Wpf.ViewModels"
              xmlns:views="clr-namespace:HomeInventory.Desktop.Wpf.Views"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:HomeInventory.Desktop.Wpf.Converters">
     <Application.Resources>
         
         <ResourceDictionary>
@@ -22,6 +23,9 @@
             <Color x:Key="AppTextColor">#172033</Color>
             <Color x:Key="AppMutedTextColor">#667085</Color>
             <Color x:Key="AppAccentColor">#0F766E</Color>
+
+            <conv:NullToVisibilityConverter x:Key="NullToVisConverter"/>
+            <conv:HexColorConverter x:Key="HexColor"/>
 
             <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
             <SolidColorBrush x:Key="AppSurfaceBrush" Color="{StaticResource AppSurfaceColor}" />

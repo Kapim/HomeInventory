@@ -8,5 +8,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         SearchResultType Type,
         string LocationPath,
         Guid LocationId
-    );
+    )
+    {
+        public string? TagMatch { get; init; }
+    };
 }

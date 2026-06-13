@@ -95,9 +95,23 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
             var q = Query.Trim().ToLowerInvariant();
             var locationMap = _allLocations.ToDictionary(l => l.Id);
+            var addedItemIds = new HashSet<Guid>();
 
             foreach (var item in _allItems.Where(i => i.Name.ToLowerInvariant().Contains(q)).Take(50))
+            {
+                addedItemIds.Add(item.Id);
                 Results.Add(new SearchResult(item.Id, item.Name, SearchResultType.Item, BuildLocationPath(item.LocationId, locationMap), item.LocationId));
+            }
+
+            foreach (var item in _allItems.Where(i => !addedItemIds.Contains(i.Id)))
+            {
+                var matchedTag = item.Tags.FirstOrDefault(t => t.Name.ToLowerInvariant().Contains(q));
+                if (matchedTag is null) continue;
+                addedItemIds.Add(item.Id);
+                Results.Add(new SearchResult(item.Id, item.Name, SearchResultType.Item, BuildLocationPath(item.LocationId, locationMap), item.LocationId)
+                    { TagMatch = matchedTag.Name });
+                if (Results.Count >= 100) break;
+            }
 
             foreach (var loc in _allLocations.Where(l => l.Name.ToLowerInvariant().Contains(q)).Take(50))
                 Results.Add(new SearchResult(loc.Id, loc.Name, SearchResultType.Location, BuildLocationPath(loc.ParentLocationId, locationMap), loc.Id));
