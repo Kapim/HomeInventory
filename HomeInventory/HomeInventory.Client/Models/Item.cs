@@ -25,5 +25,7 @@ namespace HomeInventory.Client.Models
         {
             LocationId = newLocationId;
         }
+
+        public IReadOnlyList<Tag> Tags { get; set; } = [];
     }
 }

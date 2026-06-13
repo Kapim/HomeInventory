@@ -8,13 +8,14 @@ namespace HomeInventory.Api.Mapping
     public static class ItemMapping
     {
         public static ItemDto Map(Item item) =>
-            new(item.Id, 
-                item.Name, 
-                item.Quantity, 
-                item.LocationId, 
-                item.OwnerUserId, 
-                item.PlacementNote, 
-                item.Description);
+            new(item.Id,
+                item.Name,
+                item.Quantity,
+                item.LocationId,
+                item.OwnerUserId,
+                item.PlacementNote,
+                item.Description,
+                item.Tags.Select(TagMapping.Map).ToList());
 
         public static ItemCreateRequest Map(CreateItemRequestDto request) =>
             new(request.Name,

@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace HomeInventory.Mobile.Maui.ViewModels;
@@ -31,6 +32,7 @@ public partial class ItemViewModel : ObservableObject
     private readonly Func<ItemViewModel, bool, Task> _selectedChanged;
 
     public bool IsNew => Item is null;
+    public ObservableCollection<Tag> Tags { get; } = [];
     private bool _suppressNextOnChange;
 
     public ItemViewModel(
@@ -54,6 +56,8 @@ public partial class ItemViewModel : ObservableObject
             placementNote = item.PlacementNote;
             description = item.Description;
             quantity = item.Quantity;
+            foreach (var tag in item.Tags)
+                Tags.Add(tag);
         }
     }
 
@@ -66,6 +70,9 @@ public partial class ItemViewModel : ObservableObject
         PlacementNote = item.PlacementNote;
         Quantity = item.Quantity;
         Description = item.Description;
+        Tags.Clear();
+        foreach (var tag in item.Tags)
+            Tags.Add(tag);
     }
 
     public static ItemUpdateRequest GetUpdateRequest(Item item)

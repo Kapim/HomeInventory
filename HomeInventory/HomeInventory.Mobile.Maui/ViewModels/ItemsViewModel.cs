@@ -18,6 +18,7 @@ public partial class ItemsViewModel : ObservableObject
     private readonly IHouseholdsService _householdsService;
     private readonly ILocationsService _locations;
     private readonly IItemsService _items;
+    private readonly ITagsService _tags;
     private readonly IDialogService _dialogs;
     private readonly IErrorLocalizer _errorLocalizer;
     private readonly INotificationsService _notifications;
@@ -25,6 +26,12 @@ public partial class ItemsViewModel : ObservableObject
     private readonly ISessionState _session;
 
     private Guid _locationId;
+
+    private static readonly string[] _tagColorOptions =
+    [
+        "#EF4444", "#F97316", "#EAB308", "#22C55E",
+        "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280"
+    ];
 
     [ObservableProperty]
     private ItemViewModel? selectedItem;
@@ -46,6 +53,7 @@ public partial class ItemsViewModel : ObservableObject
         IHouseholdsService householdsService,
         ILocationsService locations,
         IItemsService items,
+        ITagsService tags,
         IDialogService dialogs,
         IErrorLocalizer errorLocalizer,
         INotificationsService notifications,
@@ -55,6 +63,7 @@ public partial class ItemsViewModel : ObservableObject
         _householdsService = householdsService;
         _locations = locations;
         _items = items;
+        _tags = tags;
         _dialogs = dialogs;
         _errorLocalizer = errorLocalizer;
         _notifications = notifications;
@@ -322,6 +331,144 @@ public partial class ItemsViewModel : ObservableObject
         if (isSelected) _selectedItems.Add(vm);
         else _selectedItems.Remove(vm);
         return Task.CompletedTask;
+    }
+
+    [RelayCommand]
+    private async Task ManageTags(ItemViewModel vm)
+    {
+        if (vm.IsNew || vm.Item is null || _session.SelectedHouseholdId is null) return;
+
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return;
+
+        IReadOnlyList<Tag> householdTags;
+        try { householdTags = await _householdsService.GetTagsAsync(_session.SelectedHouseholdId.Value, CancellationToken.None); }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); return; }
+
+        var allNames = householdTags.Select(t => $"{'✓'} {t.Name}").ToList();
+        var untaggedNames = householdTags
+            .Where(t => !vm.Tags.Any(vt => vt.Id == t.Id))
+            .Select(t => t.Name)
+            .ToArray();
+        var taggedNames = vm.Tags.Select(t => $"✓ {t.Name}").ToArray();
+        var options = taggedNames.Concat(untaggedNames).ToArray();
+
+        var chosen = await page.DisplayActionSheetAsync($"Štítky: {vm.Name}", "Zavřít", "Nový štítek...", options);
+        if (chosen is null || chosen == "Zavřít") return;
+
+        if (chosen == "Nový štítek...")
+        {
+            await CreateAndAssignTag(vm, page);
+            return;
+        }
+
+        var cleanName = chosen.TrimStart('✓', ' ');
+        var tag = householdTags.FirstOrDefault(t => t.Name == cleanName);
+        if (tag is null) return;
+
+        try
+        {
+            bool isAssigned = vm.Tags.Any(t => t.Id == tag.Id);
+            if (isAssigned)
+            {
+                var updated = await _tags.RemoveTagAsync(vm.Item.Id, tag.Id, CancellationToken.None);
+                vm.SetItem(updated);
+                _notifications.Success($"Štítek '{tag.Name}' odebrán.");
+            }
+            else
+            {
+                var updated = await _tags.AssignTagAsync(vm.Item.Id, tag.Id, CancellationToken.None);
+                vm.SetItem(updated);
+                _notifications.Success($"Štítek '{tag.Name}' přiřazen.");
+            }
+        }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); }
+    }
+
+    private async Task CreateAndAssignTag(ItemViewModel vm, Page page)
+    {
+        if (_session.SelectedHouseholdId is null || vm.Item is null) return;
+
+        var name = await page.DisplayPromptAsync("Nový štítek", "Zadejte název štítku:", "Vytvořit", "Zrušit",
+            maxLength: 30, keyboard: Keyboard.Text);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var colorNames = new[] { "Červená", "Oranžová", "Žlutá", "Zelená", "Modrá", "Fialová", "Růžová", "Šedá" };
+        var chosenColor = await page.DisplayActionSheetAsync("Barva štítku", "Zrušit", null, colorNames);
+        if (chosenColor is null || chosenColor == "Zrušit") return;
+
+        var colorIndex = Array.IndexOf(colorNames, chosenColor);
+        var color = colorIndex >= 0 ? _tagColorOptions[colorIndex] : "#6B7280";
+
+        try
+        {
+            var tag = await _tags.CreateTagAsync(name, color, _session.SelectedHouseholdId.Value, CancellationToken.None);
+            var updated = await _tags.AssignTagAsync(vm.Item.Id, tag.Id, CancellationToken.None);
+            vm.SetItem(updated);
+            _notifications.Success($"Štítek '{name}' vytvořen a přiřazen.");
+        }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); }
+    }
+
+    [RelayCommand]
+    private async Task ManageHouseholdTags()
+    {
+        if (_session.SelectedHouseholdId is null) return;
+
+        var page = Shell.Current?.CurrentPage;
+        if (page is null) return;
+
+        IReadOnlyList<Tag> tags;
+        try { tags = await _householdsService.GetTagsAsync(_session.SelectedHouseholdId.Value, CancellationToken.None); }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); return; }
+
+        var options = tags.Select(t => $"🗑 {t.Name}").Append("+ Nový štítek").ToArray();
+        var chosen = await page.DisplayActionSheetAsync("Spravovat štítky domácnosti", "Zavřít", null, options);
+        if (chosen is null || chosen == "Zavřít") return;
+
+        if (chosen == "+ Nový štítek")
+        {
+            await CreateNewHouseholdTag(page);
+            return;
+        }
+
+        const string trashPrefix = "🗑 ";
+        var tagName = chosen.StartsWith(trashPrefix) ? chosen[trashPrefix.Length..] : chosen;
+        var tag = tags.FirstOrDefault(t => t.Name == tagName);
+        if (tag is null) return;
+
+        if (!await _dialogs.ShowConfirmationDialog("Smazat štítek", $"Smazat štítek '{tag.Name}'? Bude odebrán ze všech položek.")) return;
+
+        try
+        {
+            await _tags.DeleteTagAsync(tag.Id, CancellationToken.None);
+            await ReloadAsync();
+            _notifications.Success($"Štítek '{tag.Name}' smazán.");
+        }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); }
+    }
+
+    private async Task CreateNewHouseholdTag(Page page)
+    {
+        if (_session.SelectedHouseholdId is null) return;
+
+        var name = await page.DisplayPromptAsync("Nový štítek", "Zadejte název štítku:", "Vytvořit", "Zrušit",
+            maxLength: 30, keyboard: Keyboard.Text);
+        if (string.IsNullOrWhiteSpace(name)) return;
+
+        var colorNames = new[] { "Červená", "Oranžová", "Žlutá", "Zelená", "Modrá", "Fialová", "Růžová", "Šedá" };
+        var chosenColor = await page.DisplayActionSheetAsync("Barva štítku", "Zrušit", null, colorNames);
+        if (chosenColor is null || chosenColor == "Zrušit") return;
+
+        var colorIndex = Array.IndexOf(colorNames, chosenColor);
+        var color = colorIndex >= 0 ? _tagColorOptions[colorIndex] : "#6B7280";
+
+        try
+        {
+            await _tags.CreateTagAsync(name, color, _session.SelectedHouseholdId.Value, CancellationToken.None);
+            _notifications.Success($"Štítek '{name}' vytvořen.");
+        }
+        catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); }
     }
 
     private string GetMessage(Exception ex)

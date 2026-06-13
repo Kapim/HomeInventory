@@ -11,6 +11,7 @@ namespace HomeInventory.Contracts
         Guid LocationId,
         Guid OwnerId,
         string? PlacementNote,
-        string? Description
+        string? Description,
+        IReadOnlyList<TagDto>? Tags = null
     );
 }

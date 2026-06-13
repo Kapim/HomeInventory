@@ -48,10 +48,18 @@ public static class MauiClientExtensions
         .AddHttpMessageHandler<DynamicBaseUrlHandler>()
         .AddHttpMessageHandler<AuthHeaderHandler>();
 
+        services.AddHttpClient<ITagsApiClient, HttpTagsClient>(c =>
+        {
+            c.BaseAddress = Placeholder;
+        })
+        .AddHttpMessageHandler<DynamicBaseUrlHandler>()
+        .AddHttpMessageHandler<AuthHeaderHandler>();
+
         services.AddSingleton<IAuthService, AuthService>();
         services.AddTransient<IHouseholdsService, HouseholdsService>();
         services.AddTransient<ILocationsService, LocationService>();
         services.AddTransient<IItemsService, ItemsService>();
+        services.AddTransient<ITagsService, TagsService>();
 
         return services;
     }
