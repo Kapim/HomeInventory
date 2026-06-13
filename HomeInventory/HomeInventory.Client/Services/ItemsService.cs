@@ -9,7 +9,7 @@ using System.Text;
 
 namespace HomeInventory.Client.Services
 {
-    internal class ItemsService(IItemsApiClient items) : IItemsService
+    public class ItemsService(IItemsApiClient items) : IItemsService
     {
         private readonly IItemsApiClient _items = items;
 

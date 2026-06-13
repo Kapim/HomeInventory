@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="HomeInventory.Mobile.Maui.Views.LocationsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
+    xmlns:vm="clr-namespace:HomeInventory.Mobile.Maui.ViewModels"
+    x:DataType="vm:LocationsViewModel"
+    Title="Lokace">
+
+    <Shell.ToolbarItems>
+        <ToolbarItem Text="Hledat" Command="{Binding GoToSearchCommand}" />
+        <ToolbarItem Text="+ Lokace" Command="{Binding AddRootLocationCommand}" />
+        <ToolbarItem Text="+ Podzložka" Command="{Binding AddChildLocationCommand}" Order="Secondary" />
+        <ToolbarItem Text="Přejmenovat" Command="{Binding RenameLocationCommand}" Order="Secondary" />
+        <ToolbarItem Text="Přesunout" Command="{Binding StartMoveLocationCommand}" Order="Secondary" />
+        <ToolbarItem Text="Smazat" Command="{Binding DeleteLocationCommand}" Order="Secondary" />
+        <ToolbarItem Text="Přepnout domácnost" Command="{Binding SwitchHouseholdCommand}" Order="Secondary" />
+        <ToolbarItem Text="Odhlásit" Command="{Binding LogoutCommand}" Order="Secondary" />
+    </Shell.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*">
+
+        <Label Grid.Row="0"
+               Text="{Binding HouseholdName}"
+               FontSize="12"
+               TextColor="{AppThemeBinding Light=#888, Dark=#aaa}"
+               HorizontalOptions="Center"
+               Margin="0,4,0,0"
+               IsVisible="{Binding HouseholdName, Converter={StaticResource StringToBool}}" />
+
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           Margin="0,4" />
+
+        <!-- Move mode banner -->
+        <Border Grid.Row="2"
+                BackgroundColor="#FF9800"
+                Padding="12,8"
+                IsVisible="{Binding IsMovingLocation}">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0"
+                       Text="Vyberte cílovou lokaci nebo zrušte přesun"
+                       TextColor="White"
+                       VerticalOptions="Center" />
+                <Button Grid.Column="1"
+                        Text="Zrušit"
+                        Command="{Binding CancelMoveLocationCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="White" />
+            </Grid>
+        </Border>
+
+        <CollectionView Grid.Row="3"
+                        ItemsSource="{Binding FlatLocations}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedLocation}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:LocationNodeViewModel">
+                    <Border Margin="{Binding Depth, Converter={StaticResource DepthToMargin}}"
+                            Padding="12,10"
+                            BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#252525}"
+                            StrokeShape="RoundRectangle 8"
+                            Stroke="Transparent">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:LocationsViewModel}}, Path=OpenLocationCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Label Grid.Column="0"
+                                   Text="└ "
+                                   IsVisible="{Binding Depth, Converter={StaticResource IntToBool}}"
+                                   TextColor="Gray"
+                                   FontSize="14"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   FontSize="16"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="2"
+                                   Text="›"
+                                   TextColor="Gray"
+                                   FontSize="18"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center"
+                                     Spacing="12" Margin="32">
+                    <Label Text="Žádné lokace" FontSize="18" TextColor="Gray"
+                           HorizontalOptions="Center" />
+                    <Label Text="Přidejte první lokaci tlačítkem + Lokace"
+                           FontSize="14" TextColor="Gray" HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+    </Grid>
+
+</views:BasePage>

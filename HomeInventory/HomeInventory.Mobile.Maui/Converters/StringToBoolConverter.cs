@@ -1,0 +1,13 @@
+using System.Globalization;
+
+namespace HomeInventory.Mobile.Maui.Converters;
+
+/// <summary>Returns true when string is non-null and non-empty.</summary>
+public class StringToBoolConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => !string.IsNullOrEmpty(value as string);
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

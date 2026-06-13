@@ -3,12 +3,20 @@
     x:Class="HomeInventory.Mobile.Maui.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:HomeInventory.Mobile.Maui"
-    Title="HomeInventory.Mobile.Maui">
+    xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
+    Shell.FlyoutBehavior="Disabled">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <TabBar Route="main">
+        <Tab Title="Lokace" Route="lokace">
+            <ShellContent
+                Route="locations"
+                ContentTemplate="{DataTemplate views:LocationsPage}" />
+        </Tab>
+        <Tab Title="Hledat" Route="hledat">
+            <ShellContent
+                Route="search"
+                ContentTemplate="{DataTemplate views:ItemsSearchPage}" />
+        </Tab>
+    </TabBar>
 
 </Shell>
