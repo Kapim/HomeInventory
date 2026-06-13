@@ -20,6 +20,7 @@ namespace HomeInventory.Infrastructure
             services.AddScoped<ILocationRepository, EfLocationRepository>();
             services.AddScoped<IHouseholdRepository, EfHouseHoldRepository>();
             services.AddScoped<IItemRepository, EfItemRepository>();
+            services.AddScoped<ITagRepository, EfTagRepository>();
             services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
             return services;
         }

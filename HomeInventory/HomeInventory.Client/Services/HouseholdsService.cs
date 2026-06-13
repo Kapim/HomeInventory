@@ -9,9 +9,10 @@ using System.Text;
 
 namespace HomeInventory.Client.Services
 {
-    public class HouseholdsService(IHouseholdsApiClient apiClient) : IHouseholdsService
+    public class HouseholdsService(IHouseholdsApiClient apiClient, ITagsApiClient tagsApiClient) : IHouseholdsService
     {
         private readonly IHouseholdsApiClient _apiClient = apiClient;
+        private readonly ITagsApiClient _tagsApiClient = tagsApiClient;
 
 
         public async Task<IReadOnlyList<Household>> GetAllAsync(CancellationToken ct)
@@ -40,7 +41,10 @@ namespace HomeInventory.Client.Services
             return [.. (await _apiClient.GetItems(householdId, ct)).Select(x => ItemMapping.Map(x))];
         }
 
-        
-        
+        public async Task<IReadOnlyList<Models.Tag>> GetTagsAsync(Guid householdId, CancellationToken ct)
+        {
+            var dtos = await _tagsApiClient.GetTagsForHouseholdAsync(householdId, ct);
+            return dtos.Select(d => new Models.Tag(d.Id, d.Name, d.Color)).ToList();
+        }
     }
 }

@@ -52,12 +52,12 @@ namespace HomeInventory.Infrastructure.Repositories
 
         public async Task<Item?> GetByIdAsync(Guid itemId, CancellationToken ct = default)
         {
-            return await _db.Items.FindAsync([itemId], ct);
+            return await _db.Items.Include(i => i.Tags).FirstOrDefaultAsync(i => i.Id == itemId, ct);
         }
 
         public async Task<IReadOnlyList<Item>> GetByLocationAsync(Guid locationId, CancellationToken ct = default)
         {
-            return await _db.Items.Where(x => x.LocationId == locationId).ToListAsync(ct);
+            return await _db.Items.Include(i => i.Tags).Where(x => x.LocationId == locationId).ToListAsync(ct);
         }
 
         

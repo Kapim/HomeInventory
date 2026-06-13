@@ -9,6 +9,7 @@ namespace HomeInventory.Infrastructure.Persistence
         public DbSet<Household> Households => Set<Household>();
         public DbSet<Item> Items => Set<Item>();
         public DbSet<User> Users => Set<User>();
+        public DbSet<Tag> Tags => Set<Tag>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

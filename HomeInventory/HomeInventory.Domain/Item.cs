@@ -61,5 +61,18 @@ namespace HomeInventory.Domain
         {
             LocationId = newLocationId;
         }
+
+        public List<Tag> Tags { get; } = [];
+
+        public void AddTag(Tag tag)
+        {
+            if (!Tags.Contains(tag))
+                Tags.Add(tag);
+        }
+
+        public void RemoveTag(Guid tagId)
+        {
+            Tags.RemoveAll(t => t.Id == tagId);
+        }
     }
 }

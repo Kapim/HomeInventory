@@ -16,14 +16,20 @@ namespace HomeInventory.Client.Mapping
                 item.PlacementNote, 
                 item.Description);
 
-        public static Item Map(ItemDto itemDto) =>
-            new(itemDto.Id,
+        public static Item Map(ItemDto itemDto)
+        {
+            var item = new Item(
+                itemDto.Id,
                 itemDto.Name,
                 itemDto.Quantity,
                 itemDto.LocationId,
                 itemDto.OwnerId,
                 itemDto.PlacementNote,
                 itemDto.Description);
+            item.Tags = itemDto.Tags?.Select(t => new Models.Tag(t.Id, t.Name, t.Color)).ToList()
+                        ?? [];
+            return item;
+        }
 
         public static ItemUpdateRequest Map(UpdateItemRequestDto request) =>
             new(request.Name,

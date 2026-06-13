@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="HomeInventory.Mobile.Maui.Views.ItemsSearchPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
+    xmlns:vm="clr-namespace:HomeInventory.Mobile.Maui.ViewModels"
+    x:DataType="vm:ItemsSearchViewModel"
+    Title="Vyhledávání">
+
+    <Shell.ToolbarItems>
+        <ToolbarItem Text="Odhlásit" Command="{Binding LogoutCommand}" Order="Secondary" />
+    </Shell.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12">
+
+        <SearchBar Grid.Row="0"
+                   Text="{Binding Query}"
+                   Placeholder="Hledat položky a lokace..."
+                   SearchCommand="{Binding SearchCommand}"
+                   Margin="0,4" />
+
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center"
+                           Margin="0,4" />
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Results}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:SearchResult">
+                    <Border Margin="0,4"
+                            Padding="12"
+                            BackgroundColor="{AppThemeBinding Light=#F8F8F8, Dark=#252525}"
+                            StrokeShape="RoundRectangle 10"
+                            Stroke="Transparent">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ItemsSearchViewModel}}, Path=SelectResultCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+                            <Label Grid.Row="0" Grid.RowSpan="2" Grid.Column="0"
+                                   Text="{Binding Icon}"
+                                   FontSize="24"
+                                   VerticalOptions="Center"
+                                   Margin="0,0,12,0" />
+                            <Label Grid.Row="0" Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   FontSize="16"
+                                   FontAttributes="Bold" />
+                            <Label Grid.Row="1" Grid.Column="1"
+                                   Text="{Binding LocationPath}"
+                                   FontSize="12"
+                                   TextColor="Gray"
+                                   IsVisible="{Binding LocationPath, Converter={StaticResource StringToBool}}" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center"
+                                     Spacing="8" Margin="32">
+                    <Label Text="Žádné výsledky" FontSize="18" TextColor="Gray"
+                           HorizontalOptions="Center" />
+                    <Label Text="Zadejte název položky nebo lokace"
+                           FontSize="14" TextColor="Gray" HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+
+</views:BasePage>

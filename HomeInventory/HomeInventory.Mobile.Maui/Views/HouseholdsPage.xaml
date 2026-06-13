@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="HomeInventory.Mobile.Maui.Views.HouseholdsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
+    xmlns:vm="clr-namespace:HomeInventory.Mobile.Maui.ViewModels"
+    xmlns:models="clr-namespace:HomeInventory.Client.Models;assembly=HomeInventory.Client"
+    x:DataType="vm:HouseholdsViewModel"
+    Title="Domácnosti">
+
+    <Shell.ToolbarItems>
+        <ToolbarItem Text="Odhlásit" Command="{Binding LogoutCommand}" Order="Secondary" />
+    </Shell.ToolbarItems>
+
+    <Grid RowDefinitions="Auto,*">
+        <ActivityIndicator Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                           Margin="0,8" HorizontalOptions="Center" />
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Households}" Margin="16">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Household">
+                    <Border Margin="0,4" Padding="16"
+                            BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#2A2A2A}"
+                            StrokeShape="RoundRectangle 12" Stroke="Transparent">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HouseholdsViewModel}}, Path=SelectHouseholdCommand}"
+                                CommandParameter="{Binding .}" />
+                        </Border.GestureRecognizers>
+                        <HorizontalStackLayout Spacing="12">
+                            <Label Text="🏠" FontSize="28" VerticalOptions="Center" />
+                            <Label Text="{Binding Name}" FontSize="18" FontAttributes="Bold"
+                                   VerticalOptions="Center" />
+                        </HorizontalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+
+            <CollectionView.EmptyView>
+                <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="8">
+                    <Label Text="Žádné domácnosti" FontSize="18" TextColor="Gray"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+    </Grid>
+
+</views:BasePage>

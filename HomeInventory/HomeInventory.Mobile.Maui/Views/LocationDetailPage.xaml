@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<views:BasePage
+    x:Class="HomeInventory.Mobile.Maui.Views.LocationDetailPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:HomeInventory.Mobile.Maui.Views"
+    xmlns:vm="clr-namespace:HomeInventory.Mobile.Maui.ViewModels"
+    xmlns:client="clr-namespace:HomeInventory.Client.Models;assembly=HomeInventory.Client"
+    x:DataType="vm:LocationDetailViewModel"
+    Title="Upravit lokaci"
+    BackgroundColor="{AppThemeBinding Light=#F4F4F8, Dark=#111118}">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Uložit" Command="{Binding SaveAndGoBackCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="0">
+
+            <ActivityIndicator IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               HorizontalOptions="Center"
+                               Margin="0,8,0,16" />
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1C1C2E}"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="{AppThemeBinding Light=#E4E4EE, Dark=#2A2A40}"
+                    StrokeThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Název"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#512BD4, Dark=#ac99ea}" />
+                    <Entry Text="{Binding Name}"
+                           Placeholder="Název lokace"
+                           ReturnType="Done"
+                           FontSize="16" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1C1C2E}"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="{AppThemeBinding Light=#E4E4EE, Dark=#2A2A40}"
+                    StrokeThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Typ"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#512BD4, Dark=#ac99ea}" />
+                    <Picker ItemsSource="{Binding LocationTypes}"
+                            SelectedItem="{Binding SelectedLocationType}"
+                            FontSize="15" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#1C1C2E}"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="{AppThemeBinding Light=#E4E4EE, Dark=#2A2A40}"
+                    StrokeThickness="1"
+                    Padding="16"
+                    Margin="0,0,0,12">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Popis"
+                           FontSize="12"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#512BD4, Dark=#ac99ea}" />
+                    <Editor Text="{Binding Description}"
+                            Placeholder="Volitelný popis"
+                            AutoSize="TextChanges"
+                            MinimumHeightRequest="80"
+                            FontSize="15" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</views:BasePage>

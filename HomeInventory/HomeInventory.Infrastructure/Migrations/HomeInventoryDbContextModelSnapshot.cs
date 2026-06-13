@@ -140,6 +140,36 @@ namespace HomeInventory.Infrastructure.Migrations
                     b.ToTable("locations", (string)null);
                 });
 
+            modelBuilder.Entity("HomeInventory.Domain.Tag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("color");
+
+                    b.Property<Guid>("HouseholdId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("household_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HouseholdId");
+
+                    b.ToTable("tags", (string)null);
+                });
+
             modelBuilder.Entity("HomeInventory.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -169,12 +199,42 @@ namespace HomeInventory.Infrastructure.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("item_tags", b =>
+                {
+                    b.Property<Guid>("item_id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("tag_id")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("item_id", "tag_id");
+
+                    b.HasIndex("tag_id");
+
+                    b.ToTable("item_tags");
+                });
+
             modelBuilder.Entity("HomeInventory.Domain.Location", b =>
                 {
                     b.HasOne("HomeInventory.Domain.Location", null)
                         .WithMany()
                         .HasForeignKey("ParentLocationId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("item_tags", b =>
+                {
+                    b.HasOne("HomeInventory.Domain.Item", null)
+                        .WithMany()
+                        .HasForeignKey("item_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HomeInventory.Domain.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("tag_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

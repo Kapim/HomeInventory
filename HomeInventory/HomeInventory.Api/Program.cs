@@ -35,6 +35,7 @@ builder.Services.AddScoped<ILoginUseCase, LoginUseCase>();
 builder.Services.AddScoped<ILocationUseCase, LocationUseCase>();
 builder.Services.AddScoped<IHouseholdUseCase, HouseholdUseCase>();
 builder.Services.AddScoped<IItemUseCase, ItemUseCase>();
+builder.Services.AddScoped<ITagUseCase, TagUseCase>();
 builder.Services.AddScoped<IRegisterUseCase, RegisterUseCase>();
 builder.Services.AddScoped<IPasswordHasher, AspNetPasswordHasher>();
 
