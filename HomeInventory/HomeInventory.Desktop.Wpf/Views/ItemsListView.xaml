@@ -1,16 +1,18 @@
 ﻿<UserControl x:Class="HomeInventory.Desktop.Wpf.Views.ItemsListView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:HomeInventory.Desktop.Wpf.Views"
              xmlns:vm="clr-namespace:HomeInventory.Desktop.Wpf.ViewModels"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-             mc:Ignorable="d" 
+             xmlns:conv="clr-namespace:HomeInventory.Desktop.Wpf.Converters"
+             mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:HexColorConverter x:Key="HexColor"/>
         <Style x:Key="NameTemplate" TargetType="{x:Type TextBox}">
             <Setter Property="MaxLength" Value="20" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -18,6 +20,11 @@
         <Style x:Key="DescPlaceNoteTemplate" TargetType="{x:Type TextBox}">
             <Setter Property="MaxLength" Value="100" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="TagChip" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Margin" Value="0,1,3,1"/>
         </Style>
     </UserControl.Resources>
     <Grid>
@@ -28,6 +35,7 @@
         <Grid Grid.Row="0" Margin="0,0,0,14">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
@@ -44,6 +52,9 @@
             </Button>
             <Button Command="{Binding MoveToLocationCommand}" Grid.Column="3" Style="{StaticResource IconToolButton}" ToolTip="Přesunout vybrané položky">
                 <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
+            </Button>
+            <Button Command="{Binding ManageHouseholdTagsCommand}" Grid.Column="4" Style="{StaticResource IconToolButton}" ToolTip="Správa štítků domácnosti">
+                <materialDesign:PackIcon Kind="Tag" Width="20" Height="20"/>
             </Button>
         </Grid>
         <DataGrid ItemsSource="{Binding Items}"
@@ -83,6 +94,47 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Umístění" Binding="{Binding PlacementNote, UpdateSourceTrigger=LostFocus}" Width="2*" />
                 <DataGridTextColumn EditingElementStyle="{StaticResource DescPlaceNoteTemplate}" Header="Popis" Binding="{Binding Description, UpdateSourceTrigger=LostFocus}" Width="2*" />
+
+                <DataGridTemplateColumn Header="Štítky" Width="2*" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <ItemsControl ItemsSource="{Binding Tags}" VerticalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Style="{StaticResource TagChip}">
+                                            <Border.Background>
+                                                <Binding Path="Color" Converter="{StaticResource HexColor}"/>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding Name}"
+                                                       Foreground="White"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+
+                <DataGridTemplateColumn Width="44" IsReadOnly="True">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Style="{StaticResource IconToolButton}"
+                                    ToolTip="Spravovat štítky"
+                                    Width="32" Height="32" Margin="2,0"
+                                    Command="{Binding DataContext.ManageTagsCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                    CommandParameter="{Binding}">
+                                <materialDesign:PackIcon Kind="TagOutline" Width="16" Height="16"/>
+                            </Button>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 

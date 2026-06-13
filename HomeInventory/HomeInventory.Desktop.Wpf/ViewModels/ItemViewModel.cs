@@ -3,6 +3,7 @@ using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
 using HomeInventory.Desktop.Wpf.Services;
+using System.Collections.ObjectModel;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
@@ -24,6 +25,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private readonly Func<ItemViewModel, bool, Task> _itemSelectedChanged;
 
         public bool IsNew => Item == null;
+        public ObservableCollection<Tag> Tags { get; } = [];
 
         private bool _suprressNextOnChange = false;
 
@@ -52,6 +54,8 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 placementNote = Item.PlacementNote;
                 description = Item.Description;
                 quantity = Item.Quantity;
+                foreach (var tag in Item.Tags)
+                    Tags.Add(tag);
             }
         }
 
@@ -115,6 +119,9 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             PlacementNote = item.PlacementNote;
             Quantity = item.Quantity;
             Description = item.Description;
+            Tags.Clear();
+            foreach (var tag in item.Tags)
+                Tags.Add(tag);
         }
 
     }

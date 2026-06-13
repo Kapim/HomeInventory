@@ -4,10 +4,10 @@ using HomeInventory.Client.Errors;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Requests;
 using HomeInventory.Client.Services.Interfaces;
-using HomeInventory.Desktop.Wpf.Services;
-using System.Collections.ObjectModel;
-using MaterialDesignThemes.Wpf;
 using HomeInventory.Desktop.Wpf.Enums;
+using HomeInventory.Desktop.Wpf.Services;
+using MaterialDesignThemes.Wpf;
+using System.Collections.ObjectModel;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
@@ -19,12 +19,15 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
 
         private readonly ILocationsService _locations;
         private readonly IItemsService _items;
+        private readonly ITagsService _tags;
+        private readonly IHouseholdsService _householdsService;
         private readonly IDialogService _dialogs;
         private readonly IErrorLocalizer _errorLocalizer;
         private readonly INotificationsService _notifications;
         private readonly IBusyService _busy;
         public bool IsBusy => _busy.IsBusy;
         private LocationNodeViewModel? _location;
+        private Guid _householdId;
         [ObservableProperty]
         private ItemViewModel? selectedItem;
         private bool addingNewItem = false;
@@ -40,10 +43,20 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         private bool ItemsCanBeManipulated => !IsSelectingNewLocation && selectedItems.Count > 0;
         private bool ItemCanBeAdded => !IsSelectingNewLocation;
 
-        public ItemsListViewModel(ILocationsService locations, IItemsService items, IDialogService dialogs, IErrorLocalizer errorLocalizer, INotificationsService notifications, IBusyService busyService)
+        public ItemsListViewModel(
+            ILocationsService locations,
+            IItemsService items,
+            ITagsService tags,
+            IHouseholdsService householdsService,
+            IDialogService dialogs,
+            IErrorLocalizer errorLocalizer,
+            INotificationsService notifications,
+            IBusyService busyService)
         {
             _locations = locations;
             _items = items;
+            _tags = tags;
+            _householdsService = householdsService;
             _dialogs = dialogs;
             _errorLocalizer = errorLocalizer;
             _notifications = notifications;
@@ -76,12 +89,13 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             SelectedItem = null;
         }
 
-        public async Task LoadAsync(LocationNodeViewModel location, CancellationToken ct = default)
+        public async Task LoadAsync(LocationNodeViewModel location, Guid householdId, CancellationToken ct = default)
         {
             await _busy.Run(async () =>
             {
                 Clear();
                 _location = location;
+                _householdId = householdId;
                 try
                 {
                     var items = await _locations.GetItemsAsync(location.Id, ct);
@@ -305,7 +319,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                     }
                     finally
                     {
-                        await LoadAsync(_location!);
+                        await LoadAsync(_location!, _householdId);
                     }
                 });               
                 
@@ -318,6 +332,99 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             AddNewItem();
         }
+
+        [RelayCommand]
+        public async Task ManageTags(ItemViewModel vm)
+        {
+            if (vm.IsNew || vm.Item is null || _householdId == Guid.Empty) return;
+
+            IReadOnlyList<Tag> householdTags;
+            try { householdTags = await _householdsService.GetTagsAsync(_householdId, CancellationToken.None); }
+            catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); return; }
+
+            var currentTagIds = vm.Tags.Select(t => t.Id).ToList();
+            var result = _dialogs.ShowTagPicker(vm.Name ?? "", householdTags, currentTagIds);
+            if (result is null) return;
+
+            await _busy.Run(async () =>
+            {
+                try
+                {
+                    // Delete household tags
+                    foreach (var tagId in result.TagIdsToDelete)
+                        await _tags.DeleteTagAsync(tagId, CancellationToken.None);
+
+                    // Create new tags + collect their IDs
+                    var newTagIds = new List<Guid>();
+                    foreach (var spec in result.NewTagsToCreate)
+                    {
+                        var created = await _tags.CreateTagAsync(spec.Name, spec.Color, _householdId, CancellationToken.None);
+                        newTagIds.Add(created.Id);
+                    }
+
+                    var finalIds = result.FinalSelectedTagIds.Concat(newTagIds).ToHashSet();
+
+                    // Assign missing tags
+                    foreach (var tagId in finalIds.Except(currentTagIds))
+                    {
+                        var updated = await _tags.AssignTagAsync(vm.Item.Id, tagId, CancellationToken.None);
+                        vm.SetItem(updated);
+                    }
+
+                    // Remove unselected tags
+                    foreach (var tagId in currentTagIds.Except(finalIds).Except(result.TagIdsToDelete))
+                    {
+                        var updated = await _tags.RemoveTagAsync(vm.Item.Id, tagId, CancellationToken.None);
+                        vm.SetItem(updated);
+                    }
+
+                    _notifications.Success("Štítky uloženy.");
+                }
+                catch (Exception ex)
+                {
+                    _dialogs.ShowError("Operace selhala", GetMessage(ex));
+                }
+            });
+        }
+
+        [RelayCommand]
+        public async Task ManageHouseholdTags()
+        {
+            if (_householdId == Guid.Empty) return;
+
+            IReadOnlyList<Tag> householdTags;
+            try { householdTags = await _householdsService.GetTagsAsync(_householdId, CancellationToken.None); }
+            catch (Exception ex) { _dialogs.ShowError("Operace selhala", GetMessage(ex)); return; }
+
+            var result = _dialogs.ShowManageHouseholdTags(householdTags);
+            if (result is null) return;
+
+            await _busy.Run(async () =>
+            {
+                try
+                {
+                    foreach (var tagId in result.TagIdsToDelete)
+                        await _tags.DeleteTagAsync(tagId, CancellationToken.None);
+
+                    foreach (var spec in result.NewTagsToCreate)
+                        await _tags.CreateTagAsync(spec.Name, spec.Color, _householdId, CancellationToken.None);
+
+                    if (result.TagIdsToDelete.Count > 0 || result.NewTagsToCreate.Count > 0)
+                    {
+                        _notifications.Success("Štítky domácnosti aktualizovány.");
+                        if (_location is not null)
+                            await LoadAsync(_location, _householdId, CancellationToken.None);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _dialogs.ShowError("Operace selhala", GetMessage(ex));
+                }
+            });
+        }
+
+        private string GetMessage(Exception ex)
+            => ex is ApiException apiEx ? _errorLocalizer.GetString(apiEx.Type) : ex.Message;
 
         [RelayCommand(CanExecute = nameof(ItemsCanBeManipulated))]
         public void MoveToLocation()
@@ -363,7 +470,7 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
                 }
                 finally
                 {
-                    await LoadAsync(location, new CancellationTokenSource().Token);
+                    await LoadAsync(location, _householdId, new CancellationTokenSource().Token);
                 }
             });
             

@@ -80,17 +80,18 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             if (location != null)
             {
+                var householdId = LocationTree.SelectedHousehold?.Id ?? Guid.Empty;
                 if (isSelectingNewLocationForItem)
                 {
                     await RightPane.ItemsList.MoveSelectedItemsToLocation(location);
                     await RightPane.LocationDetail.LoadAsync(location, new CancellationTokenSource().Token);
                     isSelectingNewLocationForItem = false;
-                } else
+                }
+                else
                 {
                     await RightPane.LocationDetail.LoadAsync(location, new CancellationTokenSource().Token);
-                    await RightPane.ItemsList.LoadAsync(location, new CancellationTokenSource().Token);
+                    await RightPane.ItemsList.LoadAsync(location, householdId, new CancellationTokenSource().Token);
                 }
-                
             }
             else
             {
