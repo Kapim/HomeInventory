@@ -52,5 +52,8 @@ namespace HomeInventory.Client.Services
 
         public Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct)
             => _apiClient.ImportCsvAsync(householdId, csvStream, fileName, ct);
+
+        public Task<IReadOnlyList<SearchResultDto>> SearchAsync(Guid householdId, string query, CancellationToken ct)
+            => _apiClient.SearchAsync(householdId, query, ct);
     }
 }

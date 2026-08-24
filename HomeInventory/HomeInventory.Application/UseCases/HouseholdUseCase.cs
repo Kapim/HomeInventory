@@ -41,6 +41,69 @@ namespace HomeInventory.Application.UseCases
             return result;
         }
 
+        public async Task<IReadOnlyList<SearchResultItem>> SearchAsync(Guid householdId, string query, CancellationToken ct = default)
+        {
+            var results = new List<SearchResultItem>();
+            if (string.IsNullOrWhiteSpace(query))
+                return results;
+
+            var q = query.Trim().ToLowerInvariant();
+
+            var locationList = await _households.GetLocationsAsync(householdId, ct);
+            var locationMap = locationList.ToDictionary(l => l.Id);
+
+            var addedItemIds = new HashSet<Guid>();
+
+            // Items: match by name, then description, then tag name. Each item appears at most once.
+            foreach (var loc in locationList)
+            {
+                foreach (var item in await _items.GetByLocationAsync(loc.Id, ct))
+                {
+                    if (addedItemIds.Contains(item.Id))
+                        continue;
+
+                    string? tagMatch = null;
+                    var matches = item.Name.ToLowerInvariant().Contains(q)
+                        || (!string.IsNullOrWhiteSpace(item.Description) && item.Description!.ToLowerInvariant().Contains(q));
+
+                    if (!matches)
+                    {
+                        var tag = item.Tags.FirstOrDefault(t => t.Name.ToLowerInvariant().Contains(q));
+                        if (tag is null)
+                            continue;
+                        tagMatch = tag.Name;
+                    }
+
+                    addedItemIds.Add(item.Id);
+                    results.Add(new SearchResultItem(
+                        item.Id, item.Name, SearchResultKind.Item, item.LocationId,
+                        BuildLocationPath(item.LocationId, locationMap), item.Description, tagMatch));
+                }
+            }
+
+            // Locations: match by name.
+            foreach (var loc in locationList.Where(l => l.NormalizedName.Contains(q)))
+            {
+                results.Add(new SearchResultItem(
+                    loc.Id, loc.Name, SearchResultKind.Location, loc.Id,
+                    BuildLocationPath(loc.ParentLocationId, locationMap), loc.Description, null));
+            }
+
+            return results;
+        }
+
+        private static string BuildLocationPath(Guid? locationId, Dictionary<Guid, Location> locationMap)
+        {
+            var parts = new List<string>();
+            var current = locationId;
+            while (current.HasValue && locationMap.TryGetValue(current.Value, out var loc))
+            {
+                parts.Insert(0, loc.Name);
+                current = loc.ParentLocationId;
+            }
+            return string.Join(" › ", parts);
+        }
+
         public async Task<string> ExportCsvAsync(Guid householdId, CancellationToken ct = default)
         {
             var locationList = await _households.GetLocationsAsync(householdId, ct);

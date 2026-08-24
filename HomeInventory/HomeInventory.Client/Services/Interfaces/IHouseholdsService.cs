@@ -14,5 +14,6 @@ namespace HomeInventory.Client.Services.Interfaces
         Task<IReadOnlyList<Tag>> GetTagsAsync(Guid householdId, CancellationToken ct);
         Task<string> ExportCsvAsync(Guid householdId, CancellationToken ct);
         Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct);
+        Task<IReadOnlyList<SearchResultDto>> SearchAsync(Guid householdId, string query, CancellationToken ct);
     }
 }

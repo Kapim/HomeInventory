@@ -45,6 +45,14 @@ namespace HomeInventory.Api.Controllers
             return [.. (await _households.GetItemsAsync(Guid.Parse(id))).Select(x => ItemMapping.Map(x))];
         }
 
+        [HttpGet("{id}/search")]
+        public async Task<ActionResult<IReadOnlyList<SearchResultDto>>> Search(Guid id, [FromQuery] string q, CancellationToken ct)
+        {
+            var results = await _households.SearchAsync(id, q ?? string.Empty, ct);
+            return Ok(results.Select(r => new SearchResultDto(
+                r.Id, r.Name, (SearchResultKindDto)r.Kind, r.LocationId, r.LocationPath, r.Description, r.TagMatch)).ToList());
+        }
+
         [HttpGet("{id}/export")]
         public async Task<IActionResult> ExportHousehold(Guid id, CancellationToken ct)
         {

@@ -81,7 +81,11 @@
                                 <TextBlock Text="{Binding Type}" Foreground="White" FontSize="11" />
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                <TextBlock FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
+                                    <Run Text="{Binding Name}" />
+                                    <Run Text="{Binding DescriptionInline}"
+                                         FontWeight="Normal" FontStyle="Italic" Foreground="{StaticResource AppAccentBrush}" />
+                                </TextBlock>
                                 <TextBlock Text="{Binding LocationPath}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
                                 <Border CornerRadius="4" Padding="5,1" Margin="0,3,0,0"
                                         HorizontalAlignment="Left"

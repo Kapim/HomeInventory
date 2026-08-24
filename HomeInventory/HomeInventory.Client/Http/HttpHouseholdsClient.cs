@@ -160,6 +160,27 @@ namespace HomeInventory.Client.Http
             }
         }
 
+        public async Task<IReadOnlyList<SearchResultDto>> SearchAsync(Guid householdId, string query, CancellationToken ct)
+        {
+            try
+            {
+                using var resp = await _http.GetAsync($"api/households/{householdId}/search?q={Uri.EscapeDataString(query)}", ct);
+                if (!resp.IsSuccessStatusCode)
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+
+                var result = await resp.Content.ReadFromJsonAsync<IReadOnlyList<SearchResultDto>>(ct);
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+        }
+
         public async Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct)
         {
             try

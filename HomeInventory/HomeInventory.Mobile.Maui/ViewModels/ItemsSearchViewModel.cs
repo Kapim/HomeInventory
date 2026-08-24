@@ -4,6 +4,7 @@ using HomeInventory.Client;
 using HomeInventory.Client.Auth;
 using HomeInventory.Client.Models;
 using HomeInventory.Client.Services.Interfaces;
+using HomeInventory.Contracts;
 using HomeInventory.Mobile.Maui.Services;
 using HomeInventory.Mobile.Maui.Services.Navigation;
 using System.Collections.ObjectModel;
@@ -24,81 +25,61 @@ public partial class ItemsSearchViewModel(
 
     public ObservableCollection<SearchResult> Results { get; } = [];
 
-    private IReadOnlyList<Item> _allItems = [];
-    private IReadOnlyList<LocationListItem> _allLocations = [];
     private CancellationTokenSource? _debounceToken;
 
-    public async Task InitializeAsync(CancellationToken ct = default)
-    {
-        if (session.SelectedHouseholdId is null) return;
-        await LoadHouseholdDataAsync(session.SelectedHouseholdId.Value, ct);
-    }
-
-    private async Task LoadHouseholdDataAsync(Guid householdId, CancellationToken ct)
-    {
-        IsBusy = true;
-        try
-        {
-            try { _allItems = await households.GetItemsAsync(householdId, ct); }
-            catch { _allItems = []; }
-
-            try { _allLocations = await households.GetLocationsAsync(householdId, ct); }
-            catch { _allLocations = []; }
-
-            ApplyFilter();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
+    public Task InitializeAsync(CancellationToken ct = default) => Task.CompletedTask;
 
     partial void OnQueryChanged(string value)
     {
         _debounceToken?.Cancel();
         _debounceToken = new CancellationTokenSource();
-        var token = _debounceToken.Token;
-        _ = Task.Delay(300, token).ContinueWith(
-            _ => MainThread.BeginInvokeOnMainThread(ApplyFilter),
-            token,
-            TaskContinuationOptions.OnlyOnRanToCompletion,
-            TaskScheduler.Default);
+        _ = DebouncedSearchAsync(_debounceToken.Token);
+    }
+
+    private async Task DebouncedSearchAsync(CancellationToken token)
+    {
+        try { await Task.Delay(300, token); }
+        catch (TaskCanceledException) { return; }
+        await SearchAsync(token);
     }
 
     [RelayCommand]
-    private void Search() => ApplyFilter();
+    private Task Search() => SearchAsync();
 
-    private void ApplyFilter()
+    // Search runs on the server (GET /households/{id}/search); the client no longer
+    // downloads the whole inventory to filter locally.
+    private async Task SearchAsync(CancellationToken token = default)
     {
-        Results.Clear();
-        if (string.IsNullOrWhiteSpace(Query)) return;
-
-        var q = Query.Trim().ToLowerInvariant();
-        var locationMap = _allLocations.ToDictionary(l => l.Id);
-        var addedItemIds = new HashSet<Guid>();
-
-        foreach (var item in _allItems.Where(i => i.Name.ToLowerInvariant().Contains(q)).Take(50))
+        if (session.SelectedHouseholdId is null || string.IsNullOrWhiteSpace(Query))
         {
-            addedItemIds.Add(item.Id);
-            Results.Add(new SearchResult(item.Id, item.Name, SearchResultType.Item,
-                BuildLocationPath(item.LocationId, locationMap), item.LocationId));
+            MainThread.BeginInvokeOnMainThread(Results.Clear);
+            return;
         }
 
-        foreach (var item in _allItems.Where(i => !addedItemIds.Contains(i.Id)))
-        {
-            var matchedTag = item.Tags.FirstOrDefault(t => t.Name.ToLowerInvariant().Contains(q));
-            if (matchedTag is null) continue;
-            addedItemIds.Add(item.Id);
-            Results.Add(new SearchResult(item.Id, item.Name, SearchResultType.Item,
-                BuildLocationPath(item.LocationId, locationMap), item.LocationId)
-                { TagMatch = matchedTag.Name });
-            if (Results.Count >= 100) break;
-        }
+        IReadOnlyList<SearchResultDto> dtos;
+        IsBusy = true;
+        try { dtos = await households.SearchAsync(session.SelectedHouseholdId.Value, Query.Trim(), token); }
+        catch { return; }
+        finally { IsBusy = false; }
 
-        foreach (var loc in _allLocations.Where(l => l.Name.ToLowerInvariant().Contains(q)).Take(50))
-            Results.Add(new SearchResult(loc.Id, loc.Name, SearchResultType.Location,
-                BuildLocationPath(loc.ParentLocationId, locationMap), loc.Id));
+        if (token.IsCancellationRequested) return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            Results.Clear();
+            foreach (var d in dtos)
+                Results.Add(Map(d));
+        });
     }
+
+    private static SearchResult Map(SearchResultDto d) => new(
+        d.Id, d.Name,
+        d.Kind == SearchResultKindDto.Location ? SearchResultType.Location : SearchResultType.Item,
+        d.LocationPath, d.LocationId)
+    {
+        TagMatch = d.TagMatch,
+        Description = d.Description
+    };
 
     [RelayCommand]
     private async Task SelectResult(SearchResult result)
@@ -117,17 +98,5 @@ public partial class ItemsSearchViewModel(
         await auth.LogoutAsync();
         session.SelectedHouseholdId = null;
         await nav.NavigateTo<LoginViewModel>();
-    }
-
-    private static string BuildLocationPath(Guid? locationId, Dictionary<Guid, LocationListItem> locationMap)
-    {
-        var parts = new List<string>();
-        var current = locationId;
-        while (current.HasValue && locationMap.TryGetValue(current.Value, out var loc))
-        {
-            parts.Insert(0, loc.Name);
-            current = loc.ParentLocationId;
-        }
-        return string.Join(" › ", parts);
     }
 }
