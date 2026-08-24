@@ -17,10 +17,11 @@ services:
       timeout: 5s
       retries: 10
     restart: unless-stopped
-    # Port intentionally NOT published to the host — only the API needs the DB.
-    # Uncomment to reach Postgres from your LAN (e.g. for a DB client):
-    # ports:
-    #   - "5432:5432"
+    ports:
+      # host:container — host port defaults to 5433 to avoid clashing with an existing
+      # Postgres on 5432. Override via POSTGRES_HOST_PORT in .env. The API does NOT use
+      # this mapping (it reaches the DB over the internal network on 5432).
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
 
   api:
     build:

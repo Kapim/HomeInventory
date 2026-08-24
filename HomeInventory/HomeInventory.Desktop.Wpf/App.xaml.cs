@@ -47,7 +47,8 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<INotificationsService, NotificationsService>();
                     services.AddSingleton<IBusyService, BusyService>();
 
-                    services.AddHomeInventoryClient(new Uri("http://localhost:5046/"));
+                    services.AddSingleton<IServerConfig, ServerConfig>();
+                    services.AddHomeInventoryClientDynamic();
 
                     services.AddSingleton<ITokenStore, InMemoryTokenStore>();
                 })

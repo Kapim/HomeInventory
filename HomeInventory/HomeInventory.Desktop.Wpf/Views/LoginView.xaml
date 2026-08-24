@@ -16,6 +16,12 @@
             <StackPanel>
                 <TextBlock Text="Přihlášení" Style="{StaticResource PageTitleText}" Margin="0,0,0,6" />
                 <TextBlock Text="Zadejte přístupové údaje k domácnosti." Style="{StaticResource CaptionText}" Margin="0,0,0,22" />
+                <ComboBox Margin="0,0,0,12"
+                          MinHeight="42"
+                          materialDesign:HintAssist.Hint="Server"
+                          Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                          ItemsSource="{Binding Servers}"
+                          SelectedItem="{Binding SelectedServer}"/>
                 <TextBox Margin="0,0,0,12"
                          MinHeight="42"
                          materialDesign:HintAssist.Hint="Uživatelské jméno"
