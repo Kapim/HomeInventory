@@ -82,8 +82,8 @@
                             </Border>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                 <TextBlock FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
-                                    <Run Text="{Binding Name}" />
-                                    <Run Text="{Binding DescriptionInline}"
+                                    <Run Text="{Binding Name, Mode=OneWay}" />
+                                    <Run Text="{Binding DescriptionInline, Mode=OneWay}"
                                          FontWeight="Normal" FontStyle="Italic" Foreground="{StaticResource AppAccentBrush}" />
                                 </TextBlock>
                                 <TextBlock Text="{Binding LocationPath}" Style="{StaticResource CaptionText}" Margin="0,2,0,0" />
