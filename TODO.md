@@ -55,14 +55,14 @@ MAUI projekt je prázdný skeleton. Cíl: feature parity s WPF desktopem.
 
 ---
 
-## [P3] Export / import dat
+## [P3] Export / import dat ✅
 
-- [ ] API endpoint `GET /households/{id}/export` → CSV nebo Excel
-- [ ] Export obsahuje: lokace (hierarchie), položky (název, množství, lokace, popis)
-- [ ] API endpoint `POST /households/{id}/import` — nahrání CSV/Excel
-- [ ] Import: validace a report duplicit / chyb
-- [ ] WPF: tlačítka Export / Import v UI domácnosti
-- [ ] MAUI: sdílení exportovaného souboru přes `Share` API
+- [x] API endpoint `GET /households/{id}/export` → CSV
+- [x] Export obsahuje: lokace (hierarchie), položky (název, množství, lokace, popis)
+- [x] API endpoint `POST /households/{id}/import` — nahrání CSV
+- [x] Import: validace a report chyb
+- [x] WPF: tlačítka Export / Import v LocationTreeView (ikony vedle toolbar)
+- [x] MAUI: sdílení exportovaného souboru přes `Share` API (menu → Exportovat CSV)
 
 ---
 

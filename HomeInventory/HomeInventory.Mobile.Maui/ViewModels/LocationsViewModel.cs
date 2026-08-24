@@ -342,6 +342,39 @@ public partial class LocationsViewModel : ObservableObject, IAsyncInitializable
         await nav.NavigateTo<LoginViewModel>();
     }
 
+    [RelayCommand]
+    private async Task ExportHousehold()
+    {
+        if (session.SelectedHouseholdId is null) return;
+
+        IsBusy = true;
+        try
+        {
+            var csv = await householdsService.ExportCsvAsync(session.SelectedHouseholdId.Value, CancellationToken.None);
+            var fileName = $"domacnost_export_{DateTime.Now:yyyyMMdd_HHmm}.csv";
+            var filePath = Path.Combine(FileSystem.CacheDirectory, fileName);
+            await File.WriteAllTextAsync(filePath, csv, System.Text.Encoding.UTF8);
+
+            await Share.RequestAsync(new ShareFileRequest
+            {
+                Title = "Exportovat domácnost",
+                File = new ShareFile(filePath, "text/csv")
+            });
+        }
+        catch (ApiException ex)
+        {
+            dialogs.ShowError("Export selhal", errorLocalizer.GetString(ex.Type));
+        }
+        catch (Exception ex)
+        {
+            dialogs.ShowError("Export selhal", ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private static async Task<string?> PromptNameAsync(string title, string message, string? defaultValue = null)
     {
         if (Shell.Current?.CurrentPage is Page page)

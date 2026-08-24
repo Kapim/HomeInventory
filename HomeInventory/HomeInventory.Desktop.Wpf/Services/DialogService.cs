@@ -1,6 +1,7 @@
 ﻿using HomeInventory.Client.Models;
 using HomeInventory.Desktop.Wpf.Enums;
 using HomeInventory.Desktop.Wpf.Views;
+using Microsoft.Win32;
 using System.Windows;
 
 namespace HomeInventory.Desktop.Wpf.Services
@@ -40,6 +41,27 @@ namespace HomeInventory.Desktop.Wpf.Services
                 Owner = Application.Current.MainWindow
             };
             return window.ShowDialog() == true ? window.Result : null;
+        }
+
+        public string? ShowSaveFileDialog(string title, string filter, string defaultFileName)
+        {
+            var dlg = new SaveFileDialog
+            {
+                Title = title,
+                Filter = filter,
+                FileName = defaultFileName
+            };
+            return dlg.ShowDialog() == true ? dlg.FileName : null;
+        }
+
+        public string? ShowOpenFileDialog(string title, string filter)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Title = title,
+                Filter = filter
+            };
+            return dlg.ShowDialog() == true ? dlg.FileName : null;
         }
     }
 }

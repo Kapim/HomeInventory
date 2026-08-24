@@ -3,6 +3,8 @@ using HomeInventory.Application.UseCases;
 using HomeInventory.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.Text;
 
 namespace HomeInventory.Api.Controllers
 {
@@ -41,6 +43,29 @@ namespace HomeInventory.Api.Controllers
         public async Task<List<ItemDto>> GetItems(string id)
         {
             return [.. (await _households.GetItemsAsync(Guid.Parse(id))).Select(x => ItemMapping.Map(x))];
+        }
+
+        [HttpGet("{id}/export")]
+        public async Task<IActionResult> ExportHousehold(Guid id, CancellationToken ct)
+        {
+            var csv = await _households.ExportCsvAsync(id, ct);
+            var bytes = Encoding.UTF8.GetBytes(csv);
+            return File(bytes, "text/csv", $"household_{id}_export.csv");
+        }
+
+        [HttpPost("{id}/import")]
+        public async Task<ActionResult<ImportResultDto>> ImportHousehold(Guid id, IFormFile file, CancellationToken ct)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim is null)
+                return Unauthorized();
+
+            if (file == null || file.Length == 0)
+                return BadRequest("Nebyl nahrán žádný soubor.");
+
+            using var stream = file.OpenReadStream();
+            var result = await _households.ImportCsvAsync(id, stream, Guid.Parse(userIdClaim), ct);
+            return Ok(new ImportResultDto(result.LocationsImported, result.ItemsImported, result.Errors));
         }
     }
 

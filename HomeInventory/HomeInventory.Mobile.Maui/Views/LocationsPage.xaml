@@ -10,6 +10,7 @@
 
     <Shell.ToolbarItems>
         <ToolbarItem Text="+ Lokace" Command="{Binding AddRootLocationCommand}" />
+        <ToolbarItem Text="Exportovat CSV" Command="{Binding ExportHouseholdCommand}" Order="Secondary" />
         <ToolbarItem Text="Přepnout domácnost" Command="{Binding SwitchHouseholdCommand}" Order="Secondary" />
         <ToolbarItem Text="Odhlásit" Command="{Binding LogoutCommand}" Order="Secondary" />
     </Shell.ToolbarItems>

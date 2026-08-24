@@ -14,5 +14,7 @@ namespace HomeInventory.Client.Services.Interfaces
         Task<HouseholdDto> CreateAsync(CreateHouseholdRequestDto request, CancellationToken ct);
         Task<IReadOnlyList<LocationListItemDto>> GetLocations(Guid householdId, CancellationToken ct);
         Task<IReadOnlyList<ItemDto>> GetItems(Guid householdId, CancellationToken ct);
+        Task<string> ExportCsvAsync(Guid householdId, CancellationToken ct);
+        Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct);
     }
 }

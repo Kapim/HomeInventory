@@ -46,5 +46,11 @@ namespace HomeInventory.Client.Services
             var dtos = await _tagsApiClient.GetTagsForHouseholdAsync(householdId, ct);
             return dtos.Select(d => new Models.Tag(d.Id, d.Name, d.Color)).ToList();
         }
+
+        public Task<string> ExportCsvAsync(Guid householdId, CancellationToken ct)
+            => _apiClient.ExportCsvAsync(householdId, ct);
+
+        public Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct)
+            => _apiClient.ImportCsvAsync(householdId, csvStream, fileName, ct);
     }
 }

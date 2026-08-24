@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text;
+using System.Net.Http.Headers;
 
 namespace HomeInventory.Client.Http
 {
@@ -136,6 +137,51 @@ namespace HomeInventory.Client.Http
             catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
             {
                 //timeout
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+        }
+
+        public async Task<string> ExportCsvAsync(Guid householdId, CancellationToken ct)
+        {
+            try
+            {
+                using var resp = await _http.GetAsync($"api/households/{householdId}/export", ct);
+                if (!resp.IsSuccessStatusCode)
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+                return await resp.Content.ReadAsStringAsync(ct);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+        }
+
+        public async Task<ImportResultDto> ImportCsvAsync(Guid householdId, Stream csvStream, string fileName, CancellationToken ct)
+        {
+            try
+            {
+                using var content = new MultipartFormDataContent();
+                var fileContent = new StreamContent(csvStream);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");
+                content.Add(fileContent, "file", fileName);
+
+                using var resp = await _http.PostAsync($"api/households/{householdId}/import", content, ct);
+                if (!resp.IsSuccessStatusCode)
+                    throw HttpErrorMapper.Map(resp, await resp.Content.ReadAsStringAsync(ct));
+
+                var result = await resp.Content.ReadFromJsonAsync<ImportResultDto>(ct);
+                return result ?? throw new ApiException(ApiErrorTypes.InvalidResponse, "Odpoveď serveru má neplatný formát.", (int)resp.StatusCode);
+            }
+            catch (HttpRequestException ex)
+            {
+                throw HttpErrorMapper.MapNetwork(ex);
+            }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+            {
                 throw HttpErrorMapper.MapNetwork(ex);
             }
         }

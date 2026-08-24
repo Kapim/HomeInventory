@@ -31,29 +31,23 @@
                   Margin="0,0,0,12"
                   materialDesign:HintAssist.Hint="Domácnost"/>
 
-        <Grid Grid.Row="2" Margin="0,0,0,14">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0"
-                     Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}"
-                     MinHeight="40"
-                     VerticalContentAlignment="Center"
-                     ToolTip="Hledat lokaci"
-                     materialDesign:HintAssist.Hint="Hledat lokaci"/>
-            <Button Command="{Binding AddLocationCommand}" Grid.Column="1" Style="{StaticResource IconToolButton}" ToolTip="Přidat lokaci">
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,14">
+            <Button Command="{Binding AddLocationCommand}" Style="{StaticResource IconToolButton}" ToolTip="Přidat lokaci">
                 <materialDesign:PackIcon Kind="Add" Width="20" Height="20"/>
             </Button>
-            <Button Command="{Binding DeleteLocationCommand}" Grid.Column="2" Style="{StaticResource IconToolButton}" ToolTip="Smazat lokaci">
+            <Button Command="{Binding DeleteLocationCommand}" Style="{StaticResource IconToolButton}" ToolTip="Smazat lokaci">
                 <materialDesign:PackIcon Kind="Delete" Width="20" Height="20"/>
             </Button>
-            <Button Command="{Binding MoveLocationCommand}" Grid.Column="3" Style="{StaticResource IconToolButton}" ToolTip="Přesunout lokaci">
+            <Button Command="{Binding MoveLocationCommand}" Style="{StaticResource IconToolButton}" ToolTip="Přesunout lokaci">
                 <materialDesign:PackIcon Kind="SwapHorizontal" Width="20" Height="20"/>
             </Button>
-        </Grid>
+            <Button Command="{Binding ExportHouseholdCommand}" Style="{StaticResource IconToolButton}" ToolTip="Exportovat domácnost do CSV">
+                <materialDesign:PackIcon Kind="Export" Width="20" Height="20"/>
+            </Button>
+            <Button Command="{Binding ImportHouseholdCommand}" Style="{StaticResource IconToolButton}" ToolTip="Importovat domácnost z CSV">
+                <materialDesign:PackIcon Kind="Import" Width="20" Height="20"/>
+            </Button>
+        </StackPanel>
         <Border Grid.Row="3"
                 Background="{StaticResource AppSurfaceMutedBrush}"
                 BorderBrush="{StaticResource AppBorderBrush}"

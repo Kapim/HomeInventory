@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Ink;
@@ -312,6 +313,69 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
             {
                 ExpandAncestors(node);
                 SelectedLocation = node;
+            }
+        }
+
+        [RelayCommand]
+        private async Task ExportHousehold()
+        {
+            if (selectedHouseholdId == Guid.Empty) return;
+
+            var path = _dialogService.ShowSaveFileDialog(
+                "Exportovat domácnost",
+                "CSV soubory (*.csv)|*.csv",
+                $"domacnost_export_{DateTime.Now:yyyyMMdd_HHmm}.csv");
+
+            if (path is null) return;
+
+            try
+            {
+                var csv = await _households.ExportCsvAsync(selectedHouseholdId, new CancellationTokenSource().Token);
+                await File.WriteAllTextAsync(path, csv, System.Text.Encoding.UTF8);
+                _dialogService.ShowInfo("Export dokončen", $"Data byla exportována do souboru:\n{path}");
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogService.ShowError("Export selhal", message);
+            }
+        }
+
+        [RelayCommand]
+        private async Task ImportHousehold()
+        {
+            if (selectedHouseholdId == Guid.Empty) return;
+
+            var path = _dialogService.ShowOpenFileDialog(
+                "Importovat domácnost",
+                "CSV soubory (*.csv)|*.csv");
+
+            if (path is null) return;
+
+            var confirm = _dialogService.ShowConfirmationDialog(
+                "Potvrdit import",
+                "Import přidá lokace a položky ze souboru do aktuální domácnosti. Pokračovat?");
+
+            if (confirm != Enums.DialogResult.Yes) return;
+
+            try
+            {
+                using var stream = File.OpenRead(path);
+                var result = await _households.ImportCsvAsync(
+                    selectedHouseholdId, stream, Path.GetFileName(path),
+                    new CancellationTokenSource().Token);
+
+                var msg = $"Importováno: {result.LocationsImported} lokací, {result.ItemsImported} položek.";
+                if (result.Errors.Count > 0)
+                    msg += $"\n\nChyby ({result.Errors.Count}):\n" + string.Join("\n", result.Errors.Take(10));
+
+                _dialogService.ShowInfo("Import dokončen", msg);
+                await LoadAsync(selectedHouseholdId, new CancellationTokenSource().Token);
+            }
+            catch (ApiException ex)
+            {
+                var message = _errorLocalizer.GetString(ex.Type);
+                _dialogService.ShowError("Import selhal", message);
             }
         }
     }

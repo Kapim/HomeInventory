@@ -10,5 +10,7 @@ namespace HomeInventory.Desktop.Wpf.Services
         DialogResult ShowConfirmationDialog(string title, string message);
         TagPickerResult? ShowTagPicker(string itemName, IReadOnlyList<Tag> allTags, IReadOnlyList<Guid> currentTagIds);
         TagPickerResult? ShowManageHouseholdTags(IReadOnlyList<Tag> allTags);
+        string? ShowSaveFileDialog(string title, string filter, string defaultFileName);
+        string? ShowOpenFileDialog(string title, string filter);
     }
 }
