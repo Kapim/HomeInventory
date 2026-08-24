@@ -14,7 +14,8 @@ public partial class LoginViewModel(
     IAuthService auth,
     IDialogService dialogs,
     IErrorLocalizer errorLocalizer,
-    IServerConfig serverConfig) : ObservableObject
+    IServerConfig serverConfig,
+    ITokenStore tokenStore) : ObservableObject
 {
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -27,6 +28,9 @@ public partial class LoginViewModel(
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
     private string serverUrl = serverConfig.BaseUrl;
+
+    [ObservableProperty]
+    private bool stayLoggedIn = true;
 
     [ObservableProperty]
     private bool isBusy;
@@ -43,6 +47,7 @@ public partial class LoginViewModel(
         IsBusy = true;
         try
         {
+            tokenStore.Persist = StayLoggedIn;
             await auth.LoginAsync(UserName, Password);
             await nav.NavigateTo<HouseholdsViewModel>();
         }

@@ -31,6 +31,9 @@
                              MinHeight="42"
                              Margin="0,0,0,18"
                              materialDesign:HintAssist.Hint="Heslo"/>
+                <CheckBox Content="Zůstat přihlášen"
+                          IsChecked="{Binding StayLoggedIn}"
+                          Margin="0,0,0,16" />
                 <Button Content="Přihlásit" Command="{Binding LoginCommand}" Style="{StaticResource PrimaryActionButton}" />
             </StackPanel>
         </Border>

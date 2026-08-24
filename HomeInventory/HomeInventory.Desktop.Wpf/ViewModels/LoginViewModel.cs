@@ -10,13 +10,17 @@ using System.Diagnostics;
 
 namespace HomeInventory.Desktop.Wpf.ViewModels
 {
-    public partial class LoginViewModel(INavigationService nav, IAuthService auth, IDialogService dialogs, IErrorLocalizer errorLocalizer, IServerConfig serverConfig) : ObservableObject
+    public partial class LoginViewModel(INavigationService nav, IAuthService auth, IDialogService dialogs, IErrorLocalizer errorLocalizer, IServerConfig serverConfig, ITokenStore tokenStore) : ObservableObject
     {
         private readonly INavigationService _nav = nav;
         private readonly IAuthService _auth = auth;
         private readonly IDialogService _dialogs = dialogs;
         private readonly IErrorLocalizer _errorLocalizer = errorLocalizer;
         private readonly IServerConfig _serverConfig = serverConfig;
+        private readonly ITokenStore _tokenStore = tokenStore;
+
+        [ObservableProperty]
+        private bool stayLoggedIn = true;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(LoginCommand))]
@@ -37,11 +41,19 @@ namespace HomeInventory.Desktop.Wpf.ViewModels
         {
             try
             {
+                _tokenStore.Persist = StayLoggedIn;
                 var result = await _auth.LoginAsync(UserName, Password);
                 await _nav.NavigateTo<MainViewModel>();
             }  catch (ApiException ex)
             {
                 var message = _errorLocalizer.GetString(ex.Type);
+                if (ex.Type == ApiErrorTypes.Network)
+                {
+                    // Surface the target server + underlying reason so connection issues are diagnosable.
+                    message += $"\n\nServer: {_serverConfig.BaseUrl}";
+                    if (ex.InnerException is not null)
+                        message += $"\nDetail: {ex.InnerException.Message}";
+                }
                 _dialogs.ShowError("Operace selhala", message);
             }
 

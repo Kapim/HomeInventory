@@ -50,7 +50,7 @@ namespace HomeInventory.Desktop.Wpf
                     services.AddSingleton<IServerConfig, ServerConfig>();
                     services.AddHomeInventoryClientDynamic();
 
-                    services.AddSingleton<ITokenStore, InMemoryTokenStore>();
+                    services.AddSingleton<ITokenStore, PersistentTokenStore>();
                 })
                 .Build();
 

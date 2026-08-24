@@ -29,7 +29,7 @@ public partial class AppShell : Shell
         try
         {
             var token = await _tokenStore.LoadAsync();
-            if (string.IsNullOrEmpty(token))
+            if (!JwtHelper.IsValid(token))
                 await GoToAsync("login");
             else if (_session.SelectedHouseholdId is not null)
                 await GoToAsync("//main");

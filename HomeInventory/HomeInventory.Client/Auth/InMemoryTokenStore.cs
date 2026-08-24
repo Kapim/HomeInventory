@@ -6,6 +6,8 @@ namespace HomeInventory.Client.Auth
 {
     public class InMemoryTokenStore : ITokenStore
     {
+        public bool Persist { get; set; } = true; // no durable storage here; flag has no effect
+
         private string? _token = "";
         public Task ClearAsync(CancellationToken ct = default)
         {

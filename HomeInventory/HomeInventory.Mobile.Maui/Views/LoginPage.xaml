@@ -59,6 +59,12 @@
                            Margin="12,4" />
                 </Border>
 
+                <HorizontalStackLayout Spacing="8" Margin="4,8,0,0">
+                    <Switch IsToggled="{Binding StayLoggedIn}" VerticalOptions="Center" />
+                    <Label Text="Zůstat přihlášen" VerticalOptions="Center"
+                           TextColor="{AppThemeBinding Light=#333, Dark=#DDD}" />
+                </HorizontalStackLayout>
+
                 <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                    HorizontalOptions="Center" Margin="0,4" />
 
