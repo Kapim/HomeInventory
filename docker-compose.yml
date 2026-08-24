@@ -1,0 +1,45 @@
+# Full stack: PostgreSQL + HomeInventory API.
+# Usage:  docker compose up -d --build
+# Data is persisted in the named volume `hi_pgdata` and survives container removal.
+services:
+  postgres:
+    image: postgres:16
+    container_name: homeinventory-postgres
+    environment:
+      POSTGRES_DB: homeinventory
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
+    volumes:
+      - hi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d homeinventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # Port intentionally NOT published to the host — only the API needs the DB.
+    # Uncomment to reach Postgres from your LAN (e.g. for a DB client):
+    # ports:
+    #   - "5432:5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: homeinventory-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Overrides ConnectionStrings:Default from appsettings.json (host = compose service name).
+      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=homeinventory;Username=user;Password=${POSTGRES_PASSWORD:-pass}"
+      # CHANGE THIS in production — set JWT_SECRET in a .env file next to this compose.
+      Jwt__SecretKey: ${JWT_SECRET:-DEV_SECRET_12345678901234567890asdfasdfasdfasdf}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      # host:container — keeps the API reachable on the port you already used (5046).
+      - "5046:8080"
+    restart: unless-stopped
+
+volumes:
+  hi_pgdata:
